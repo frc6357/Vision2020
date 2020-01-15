@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from src.create_bound import*
 
-im = cv2.imread("../CargoSideStraightDark36in.jpg")
+im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/RedLoading-108in.jpg")
 
 """
 cv2.cvtColor() takes in a variable storing a read image
@@ -15,7 +15,7 @@ cv2.cvtColor(im, cv2.BGR2HLS)
 this will read the image stored in im that is currently in the BGR color space
 and convert all pixels to HLS
 """
-im = cv2.cvtColor(im, cv2.COLORBGR2HSV)
+im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
 
 
 # upper bound +5%: HSV (171.15, 105, 91.875)
@@ -27,8 +27,8 @@ Ex: input HSV = [120, 100, 97] and threshold image by +5%
 image_upper_bound = bound_percent_cv2(120, 100, 97, 1.05)
 """
 
-image_lower_bound = bound_percent_cv2(164, 99, 88, 0.50)
-image_upper_bound = bound_percent_cv2(164, 99, 88, 1.5)
+image_lower_bound = bound_percent_cv2(153, 100, 81, 0.85)
+image_upper_bound = bound_percent_cv2(153, 100, 81, 1.15)
 
 """
 cv2.inRange() takes in a variable storing a read image, lower bound, and upper bound
