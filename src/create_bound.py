@@ -34,6 +34,6 @@ def bound_percent(h, s, v, percent):
     return lower_bound
 
 if __name__ == '__main__':
-    lower_bound = bound_percent_cv2(120, 100, 97, 1)
+    lower_bound = bound_percent_cv2(1, 100, 97, 1)
     print(lower_bound)
 
