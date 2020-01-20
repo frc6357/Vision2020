@@ -16,22 +16,20 @@ def detect_tri(input):
     theta3 = int(math.atan(m3) * 180/math.pi)
     theta_03 = theta3 if theta3 <= 180 else 360-theta3
     theta_03 = abs(theta_03)
-    theta_offset = min(theta_01, theta_02, theta_03)
+    min_theta = min(theta_01, theta_02, theta_03)
+    theta_offset = [a for a in [theta1, theta2, theta3] if abs(a) == min_theta][0]
     theta1 = theta1-theta_offset
     theta2 = theta2-theta_offset
     theta3 = theta3-theta_offset
 
-    if (theta1-theta2 in accept_angles):
+    if theta1-theta2 in accept_angles:
+        return None
+    if theta1-theta3 in accept_angles:
+        return None
+    if theta2-theta3 in accept_angles:
         return None
 
-    if (theta1-theta3 in accept_angles):
-        return None
-
-    if (theta2-theta3 in accept_angles):
-        return None
-
-
-    if ((theta1 + theta2) % 60) not in accept_angles:
+    if (theta1 + theta2) % 60 not in accept_angles:
         return None
 
     if (theta1 + theta3) % 60 not in accept_angles:
