@@ -7,10 +7,14 @@ from src.create_bound import *
 from src.systemeq import *
 from src.reg_triangle_detect import *
 from src.mb_to_xy import *
-
+from src.largest_triangle import *
+from src.removeDuplicates import *
+from src.smallest_triangle import *
 ts_start = time.time()
 
 im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-108in-Center.jpg")
+
+
 
 """
 cv2.cvtColor() takes in a variable storing a read image
@@ -92,7 +96,6 @@ lines = cv2.HoughLines(edges, 1, np.pi/120, 60)
 
 points = []
 slope_offset = []
-print(len(lines))
 for line in lines:
     rho, theta = line[0]
     a = np.cos(theta)
@@ -110,10 +113,15 @@ for line in lines:
     slope_offset.append([m1, b1])
     cv2.line(im, (x1, y1), (x2, y2), (0, 255, 255), 2)
 
+im1 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+im2 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+im3 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+im4 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+
 points = [solve_syseq(pair) for pair in itertools.combinations(slope_offset, 2)]
 
 points = [point for point in points if point is not None]
-print(points)
+
 
 for point in points:
     cv2.circle(im, point, 5, (60, 255, 255))
@@ -122,12 +130,46 @@ for point in points:
 triangles = [detect_tri(a) for a in itertools.combinations(slope_offset, 3)]
 triangles = [a for a in triangles if a is not None]
 
-print(len(triangles))
 
 tri_points = [mb_xy(a) for a in triangles]
 tri_points = [a for a in tri_points if a[0] is not None]
 
+print(len(tri_points))
+
 print(tri_points)
+largest_triangle = [a for a in tri_points]
+while len(largest_triangle) > 1:
+    largest_triangle = [max_tri(a) for a in itertools.combinations(largest_triangle, 2)]
+    largest_triangle = [a for a in largest_triangle if a is not None]
+
+    largest_triangle = remov_dupl(largest_triangle)
+
+largest_triangle = [a for t in largest_triangle for a in t]
+
+smallest_triangle = [a for a in tri_points]
+while len(smallest_triangle) > 1:
+    smallest_triangle = [min_tri(a) for a in itertools.combinations(smallest_triangle, 2)]
+    smallest_triangle = [a for a in smallest_triangle if a is not None]
+
+    smallest_triangle = remov_dupl(smallest_triangle)
+
+smallest_triangle = [a for t in smallest_triangle for a in t]
+
+"""
+largest_triangle = [max_tri(a) for a in itertools.combinations(largest_triangle, 2)]
+largest_triangle = [a for a in largest_triangle if a is not None]
+largest_triangle = remov_dupl(largest_triangle)
+
+print(largest_triangle)
+"""
+for a in largest_triangle:
+    cv2.circle(im1, a, 5, (60, 255, 255))
+
+cv2.imshow("Largest Triangle", im1)
+
+for a in smallest_triangle:
+    cv2.circle(im2, a, 5, (60, 255, 255))
+cv2.imshow("Smallest Triangle", im2)
 
 #triangles_list_pairs = mb_xy(triangles)
 
@@ -141,13 +183,6 @@ tri_m_np = np.array([a[0] for a in tri_m_b])
 tri_b_np = np.array([a[1] for a in tri_m_b])
 
 """
-
-
-
-
-
-
-
 
 
 cv2.imshow("Grayscale Otsu Thresholded Image", th2)
