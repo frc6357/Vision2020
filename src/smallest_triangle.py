@@ -21,8 +21,10 @@ def min_tri(input):
     t2_max_length = max(t2_d1, t2_d2, t2_d3)
 
     if t1_max_length < t2_max_length:
+
         return first, second, third
     else:
+
         return fourth, fifth, sixth
 
 

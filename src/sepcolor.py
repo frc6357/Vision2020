@@ -10,10 +10,16 @@ from src.mb_to_xy import *
 from src.largest_triangle import *
 from src.removeDuplicates import *
 from src.smallest_triangle import *
+from src.dimension_check import *
+from src.valid_lines import *
+
 ts_start = time.time()
 
-im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-108in-Center.jpg")
-
+im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-132in-Center.jpg")
+h, w, d = im.shape
+print(h, "height")
+print(w, "width")
+print(d, "depth")
 
 
 """
@@ -58,13 +64,16 @@ back to BGR in order to display interpretable images
 
 imageFiltered = cv2.cvtColor(imageFiltered, cv2.COLOR_HSV2BGR)
 
+cv2.imshow("Filtered Image", imageFiltered)
+
 #Converts BGR to Grayscale image in preparation for thresholding by making a bimodal image
 
 grayscale_im = cv2.cvtColor(imageFiltered, cv2.COLOR_BGR2GRAY)
-
+cv2.imshow("Grayscale Image", grayscale_im)
 
 ret2, th2 = cv2.threshold(grayscale_im, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
+cv2.imshow("Grayscale Otsu Thresholded Image", th2)
 """
 laplacian = cv2.Laplacian(grayscale_im, cv2.CV_64F)
 
@@ -85,13 +94,37 @@ sobely_8u = np.uint8(abs_sobel64f)
 
 cv2.imshow("Sobel Y Edge Detect", sobely_8u)
 """
-edges = cv2.Canny(grayscale_im, 100, 200)
+edges = cv2.Canny(th2, 100, 200)
 
 cv2.imshow("Canny Edge Detection", edges)
 
 
 
-lines = cv2.HoughLines(edges, 1, np.pi/120, 60)
+lines = []
+"""
+for i in range(60, -1, -5):
+    lines = cv2.HoughLines(edges, 1, np.pi / 180, i)
+    num_lines = len(lines)
+    if num_lines in range(8, 21):
+        new_list = [a[0, 1] for a in lines]
+        valid_lines = valid_line_test(lines, new_list)
+        break
+"""
+for i in range(60, -1, -5):
+    lines = cv2.HoughLines(edges, 1, np.pi / 180, i)
+    num_lines = len(lines)
+    if num_lines in range(8, 21):
+        break
+
+#valid_line_test(lines, )
+
+
+
+
+
+print("threshold of: ", i)
+print("number of lines: ", num_lines)
+
 #need a check to make sure we find lines
 
 points = []
@@ -113,10 +146,10 @@ for line in lines:
     slope_offset.append([m1, b1])
     cv2.line(im, (x1, y1), (x2, y2), (0, 255, 255), 2)
 
+
+
 im1 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
 im2 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
-im3 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
-im4 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
 
 points = [solve_syseq(pair) for pair in itertools.combinations(slope_offset, 2)]
 
@@ -133,11 +166,26 @@ triangles = [a for a in triangles if a is not None]
 
 tri_points = [mb_xy(a) for a in triangles]
 tri_points = [a for a in tri_points if a[0] is not None]
+tri_points = [a for a in tri_points if a[1] is not None]
+tri_points = [a for a in tri_points if a[2] is not None]
 
-print(len(tri_points))
+tri_in_img = [in_img(a, h, w) for a in tri_points]
+tri_in_img = [a for a in tri_in_img if a[0] is not None]
+tri_in_img = [a for a in tri_in_img if a[1] is not None]
+tri_in_img = [a for a in tri_in_img if a[2] is not None]
 
-print(tri_points)
-largest_triangle = [a for a in tri_points]
+
+
+"""
+if all(tri_in_img) == False:
+    print("triangle is outside of image")
+    cv2.waitKey(0)
+    exit()
+"""
+
+
+largest_triangle = [a for a in tri_in_img]
+
 while len(largest_triangle) > 1:
     largest_triangle = [max_tri(a) for a in itertools.combinations(largest_triangle, 2)]
     largest_triangle = [a for a in largest_triangle if a is not None]
@@ -145,8 +193,10 @@ while len(largest_triangle) > 1:
     largest_triangle = remov_dupl(largest_triangle)
 
 largest_triangle = [a for t in largest_triangle for a in t]
+triangle = []
 
-smallest_triangle = [a for a in tri_points]
+smallest_triangle = [a for a in tri_in_img]
+
 while len(smallest_triangle) > 1:
     smallest_triangle = [min_tri(a) for a in itertools.combinations(smallest_triangle, 2)]
     smallest_triangle = [a for a in smallest_triangle if a is not None]
@@ -164,32 +214,24 @@ print(largest_triangle)
 """
 for a in largest_triangle:
     cv2.circle(im1, a, 5, (60, 255, 255))
-
 cv2.imshow("Largest Triangle", im1)
 
 for a in smallest_triangle:
     cv2.circle(im2, a, 5, (60, 255, 255))
 cv2.imshow("Smallest Triangle", im2)
 
-#triangles_list_pairs = mb_xy(triangles)
-
-#print(triangles_list_pairs)
-
-
 """
-
 tri_m_np = np.array([a[0] for a in tri_m_b])
 
 tri_b_np = np.array([a[1] for a in tri_m_b])
-
 """
 
 
-cv2.imshow("Grayscale Otsu Thresholded Image", th2)
+
 # cv2.imshow() takes in a string that is windows name and then a variable that stores the image
 
-cv2.imshow("Filtered Image", imageFiltered)
-cv2.imshow("Grayscale Image", grayscale_im)
+
+
 # window name will be Filtered Image
 
 im = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)

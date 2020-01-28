@@ -5,6 +5,8 @@ def mb_xy(input):
     s1 = solve_syseq((f,t))
     t1 = solve_syseq((s,t))
 
+
+
     return (f1, s1, t1)
 
 
