@@ -11,11 +11,13 @@ from src.largest_triangle import *
 from src.removeDuplicates import *
 from src.smallest_triangle import *
 from src.dimension_check import *
-from src.valid_lines import *
+from src.longest_edge import *
+from src.draw_equilateral_triangle import *
 
 ts_start = time.time()
 
 im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-132in-Center.jpg")
+im3 = im
 h, w, d = im.shape
 print(h, "height")
 print(w, "width")
@@ -174,6 +176,29 @@ tri_in_img = [a for a in tri_in_img if a[0] is not None]
 tri_in_img = [a for a in tri_in_img if a[1] is not None]
 tri_in_img = [a for a in tri_in_img if a[2] is not None]
 
+longest_edge = [longest_side(a) for a in tri_in_img]
+
+equ_tri = [draw_eq_tri(a) for a in longest_edge]
+
+largest_triangle = [a for a in equ_tri]
+
+while len(largest_triangle) > 1:
+    largest_triangle = [max_tri(a) for a in itertools.combinations(largest_triangle, 2)]
+    largest_triangle = [a for a in largest_triangle if a is not None]
+
+    largest_triangle = remov_dupl(largest_triangle)
+
+largest_triangle = [a for t in largest_triangle for a in t]
+
+
+for a in largest_triangle:
+    cv2.circle(im1, a, 5, (0, 255, 255))
+
+
+
+
+
+cv2.imshow("Equilateral Triangles", im1)
 
 
 """
@@ -183,7 +208,7 @@ if all(tri_in_img) == False:
     exit()
 """
 
-
+"""
 largest_triangle = [a for a in tri_in_img]
 
 while len(largest_triangle) > 1:
@@ -204,14 +229,14 @@ while len(smallest_triangle) > 1:
     smallest_triangle = remov_dupl(smallest_triangle)
 
 smallest_triangle = [a for t in smallest_triangle for a in t]
-
+"""
 """
 largest_triangle = [max_tri(a) for a in itertools.combinations(largest_triangle, 2)]
 largest_triangle = [a for a in largest_triangle if a is not None]
 largest_triangle = remov_dupl(largest_triangle)
 
 print(largest_triangle)
-"""
+
 for a in largest_triangle:
     cv2.circle(im1, a, 5, (60, 255, 255))
 cv2.imshow("Largest Triangle", im1)
@@ -220,6 +245,7 @@ for a in smallest_triangle:
     cv2.circle(im2, a, 5, (60, 255, 255))
 cv2.imshow("Smallest Triangle", im2)
 
+"""
 """
 tri_m_np = np.array([a[0] for a in tri_m_b])
 
