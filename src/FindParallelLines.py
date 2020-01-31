@@ -1,7 +1,6 @@
-threshold = 10
+threshold = 0.1
 
 #example output of the hough transform
-numlines = 20
 
 input = [[[415.,1.5009831 ]],
 
@@ -19,8 +18,8 @@ input = [[[415.,1.5009831 ]],
 
  [[417,0.47123888]]]
 
-print(input)
-print()
+#print(input)
+#print()
 
 angles = []
 parallels = []
@@ -42,17 +41,30 @@ for i in range(0, len(angles)):
         #add the line with that angle to the parallel lines list
         parallels.append(input[i])
 
+#print(parallels)
 
-amountToCheck = len(parallels)
-
-for i in range(amountToCheck):
+i=0
+#check every elelment up to the second-to-last
+while i < len(parallels)-1:
+    #innocent until proven guilty
     foundSimilar = False
-    for j in range(amountToCheck):
-        if parallels[i][0][1]!=parallels[j][0][1] and abs(parallels[i][0][1]-parallels[j][0][1])<=threshold:
+    #store the index of the value we are comparing
+    identicals = []
+    identicals.append(i)
+    #check it against every element after it
+    for j in range(i+1,len(parallels)):
+        if parallels[i][0][1] == parallels[j][0][1]:
+            #store the index of the line if its parallel
+            identicals.append(j)
+        #otherwise, check if it is too nearby
+        elif abs(parallels[i][0][1]-parallels[j][0][1]) <= threshold:
             foundSimilar = True
     if foundSimilar:
-        pass
-    else:
-        lonePairs.append(parallels[i])
+        identicals.sort(reverse = True)
+        #remove the line and all its parallels if a similar one was found
+        for k in identicals:
+            parallels.pop(k)     
+        j = j+1
+    i = i+1
 
-print(lonePairs)
+print(parallels)
