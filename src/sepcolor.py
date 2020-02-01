@@ -68,16 +68,16 @@ back to BGR in order to display interpretable images
 
 imageFiltered = cv2.cvtColor(imageFiltered, cv2.COLOR_HSV2BGR)
 
-cv2.imshow("Filtered Image", imageFiltered)
+#cv2.imshow("Filtered Image", imageFiltered)
 
 #Converts BGR to Grayscale image in preparation for thresholding by making a bimodal image
 
 grayscale_im = cv2.cvtColor(imageFiltered, cv2.COLOR_BGR2GRAY)
-cv2.imshow("Grayscale Image", grayscale_im)
+#cv2.imshow("Grayscale Image", grayscale_im)
 
 ret2, th2 = cv2.threshold(grayscale_im, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
-cv2.imshow("Grayscale Otsu Thresholded Image", th2)
+#cv2.imshow("Grayscale Otsu Thresholded Image", th2)
 """
 laplacian = cv2.Laplacian(grayscale_im, cv2.CV_64F)
 
@@ -100,7 +100,7 @@ cv2.imshow("Sobel Y Edge Detect", sobely_8u)
 """
 edges = cv2.Canny(th2, 100, 200)
 
-cv2.imshow("Canny Edge Detection", edges)
+#cv2.imshow("Canny Edge Detection", edges)
 
 
 
@@ -116,6 +116,7 @@ for i in range(60, -1, -5):
 """
 for i in range(60, -1, -5):
     lines = cv2.HoughLines(edges, 1, np.pi / 180, i)
+
     num_lines = len(lines)
     if num_lines in range(8, 21):
         break
@@ -211,10 +212,6 @@ centroid_point = centroid(largest_triangle)
 
 cv2.circle(original_im, centroid_point, 5, (0, 255, 255))
 
-
-cv2.imshow("Equilateral Triangles", original_im)
-
-
 """
 if all(tri_in_img) == False:
     print("triangle is outside of image")
@@ -276,12 +273,12 @@ tri_b_np = np.array([a[1] for a in tri_m_b])
 
 im = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
 
-
-cv2.imshow("Original Image", im)
-# window name will be Original Image
 ts_end = time.time()
-
-
 runtime = ts_end-ts_start
 print(runtime, "total time")
+
+cv2.imshow("Equilateral Triangles", original_im)
+cv2.imshow("Original Image", im)
+# window name will be Original Image
+
 cv2.waitKey(0)
