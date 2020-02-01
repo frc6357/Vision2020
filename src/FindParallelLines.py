@@ -1,4 +1,5 @@
-threshold = 10
+import itertools
+threshold = 0.1
 
 #example output of the hough transform
 numlines = 20
@@ -42,17 +43,40 @@ for i in range(0, len(angles)):
         #add the line with that angle to the parallel lines list
         parallels.append(input[i])
 
-
+print(parallels)
 amountToCheck = len(parallels)
-
+""""
 for i in range(amountToCheck):
     foundSimilar = False
     for j in range(amountToCheck):
-        if parallels[i][0][1]!=parallels[j][0][1] and abs(parallels[i][0][1]-parallels[j][0][1])<=threshold:
+        print(parallels[i][0][1])
+        print(parallels[j][0][1])
+        if parallels[i][0][1] != parallels[j][0][1] and abs(parallels[i][0][1]-parallels[j][0][1]) <= threshold:
             foundSimilar = True
     if foundSimilar:
         pass
     else:
         lonePairs.append(parallels[i])
+"""
 
-print(lonePairs)
+parallels = [a for t in parallels for a in t]
+parallels_pairs = [a for a in itertools.combinations(parallels, 2)]
+
+j = 0
+
+for i in range(0, 3):
+    for j in range(0, 4):
+        if parallels[i][1] != parallels[j][1] and abs(parallels[i][1] - parallels[i][1] <= threshold):
+            parallels = [a for a in parallels if a[1] != parallels[i][1]]
+
+
+
+
+
+
+
+
+
+
+
+print(parallels)

@@ -12,10 +12,14 @@ def longest_side(input):
 
     t1_d3 = math.sqrt((x3 - x1) ** 2 + (y3 - y1) ** 2)
 
-    t1_max_length = max(t1_d1, t1_d2, t1_d3)
+    if t1_d1 == max(t1_d1, t1_d2, t1_d3):
+        return (x1, y1), (x2, y2)
+    if t1_d2 == max(t1_d1, t1_d2, t1_d3):
+        return (x2, y2), (x3, y3)
+    if t1_d3 == max(t1_d1, t1_d2, t1_d3):
+        return (x1, y1), (x3, y3)
 
-    l = t1_max_length
-   return
+
 
 
 
