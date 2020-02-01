@@ -13,11 +13,12 @@ from src.smallest_triangle import *
 from src.dimension_check import *
 from src.longest_edge import *
 from src.draw_equilateral_triangle import *
+from src.find_tri_centroid import *
+
 
 ts_start = time.time()
 
-im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-132in-Center.jpg")
-im3 = im
+im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-108in-Center.jpg")
 h, w, d = im.shape
 print(h, "height")
 print(w, "width")
@@ -35,6 +36,7 @@ this will read the image stored in im that is currently in the BGR color space
 and convert all pixels to HLS
 """
 im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
+im3 = im
 
 
 # upper bound +5%: HSV (171.15, 105, 91.875)
@@ -147,22 +149,33 @@ for line in lines:
     b1 = y1 - m1*x1
     slope_offset.append([m1, b1])
     cv2.line(im, (x1, y1), (x2, y2), (0, 255, 255), 2)
-
+"""
+a for loop that takes the output from hough lines (rho, theta) and transforms them 
+into slopes and intercepts and appends them to an array  
+"""
 
 
 im1 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
 im2 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
 
 points = [solve_syseq(pair) for pair in itertools.combinations(slope_offset, 2)]
+"""
+takes slopes and intercepts from the slope_offset array and uses list comprehension
+to loop through each element and find the intersections between the lines
+"""
 
 points = [point for point in points if point is not None]
-
+#removes nones from the list
 
 for point in points:
     cv2.circle(im, point, 5, (60, 255, 255))
-
+#draws each intersection found from previous list comprehension
 
 triangles = [detect_tri(a) for a in itertools.combinations(slope_offset, 3)]
+"""
+using the slopes and intercepts from slope offset detect_tri() finds all the lines that intersect 
+and make regular triangles, using list comprehension to loop through each element 
+"""
 triangles = [a for a in triangles if a is not None]
 
 
@@ -190,15 +203,16 @@ while len(largest_triangle) > 1:
 
 largest_triangle = [a for t in largest_triangle for a in t]
 
-
+original_im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-108in-Center.jpg")
 for a in largest_triangle:
-    cv2.circle(im1, a, 5, (0, 255, 255))
+    cv2.circle(original_im, a, 5, (0, 255, 255))
+
+centroid_point = centroid(largest_triangle)
+
+cv2.circle(original_im, centroid_point, 5, (0, 255, 255))
 
 
-
-
-
-cv2.imshow("Equilateral Triangles", im1)
+cv2.imshow("Equilateral Triangles", original_im)
 
 
 """
