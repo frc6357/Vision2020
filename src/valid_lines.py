@@ -60,7 +60,7 @@ def check_valid(input, threshold):
 
         return parallels
     else:
-        return "6357"
+        return "no lines"
 
 def valid_line_test(input, item):
     return [i for i, x in enumerate(input[0,1]) for a in item if x == a]

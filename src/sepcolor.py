@@ -3,22 +3,22 @@ import cv2
 import time
 import itertools
 import numpy as np
-from src.create_bound import *
-from src.systemeq import *
-from src.reg_triangle_detect import *
-from src.mb_to_xy import *
-from src.largest_triangle import *
-from src.removeDuplicates import *
-from src.smallest_triangle import *
-from src.dimension_check import *
-from src.longest_edge import *
-from src.draw_equilateral_triangle import *
-from src.find_tri_centroid import *
-from src.valid_lines import *
+from create_bound import *
+from systemeq import *
+from reg_triangle_detect import *
+from mb_to_xy import *
+from largest_triangle import *
+from removeDuplicates import *
+from smallest_triangle import *
+from dimension_check import *
+from longest_edge import *
+from draw_equilateral_triangle import *
+from find_tri_centroid import *
+from valid_lines import *
 
 ts_start = time.time()
 
-im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-132in-Center.jpg")
+im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-108in-Center.jpg")
 h, w, d = im.shape
 print(h, "height")
 print(w, "width")
