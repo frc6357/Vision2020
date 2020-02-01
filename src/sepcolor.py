@@ -18,7 +18,7 @@ from src.valid_lines import *
 
 ts_start = time.time()
 
-im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-108in-Center.jpg")
+im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-132in-Center.jpg")
 h, w, d = im.shape
 print(h, "height")
 print(w, "width")
@@ -114,12 +114,13 @@ for i in range(60, -1, -5):
         valid_lines = valid_line_test(lines, new_list)
         break
 """
-for i in range(60, -1, -5):
+for i in range(60,6,-5):
     lines = cv2.HoughLines(edges, 1, np.pi / 180, i)
-    lines = check_valid(lines, 0.1)
-    num_lines = len(lines)
-    if num_lines == 6:
-        break
+    if type(lines)!=str:
+        lines = check_valid(lines, 0.1)
+        num_lines = len(lines)
+        if num_lines == 6:
+            break
 
 #valid_line_test(lines, )
 
@@ -145,7 +146,8 @@ for line in lines:
     y1 = int(y0 + 1000*(a))
     x2 = int(x0 - 1000*(-b))
     y2 = int(y0 - 1000*(a))
-
+    if x2 == x1:
+        continue
     m1 = (y2-y1)/(x2-x1)
     b1 = y1 - m1*x1
     slope_offset.append([m1, b1])
@@ -158,6 +160,8 @@ into slopes and intercepts and appends them to an array
 
 im1 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
 im2 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+
+'''
 
 points = [solve_syseq(pair) for pair in itertools.combinations(slope_offset, 2)]
 """
@@ -273,12 +277,14 @@ tri_b_np = np.array([a[1] for a in tri_m_b])
 
 im = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
 
+'''
+
 ts_end = time.time()
 runtime = ts_end-ts_start
 print(runtime, "total time")
 
-cv2.imshow("Equilateral Triangles", original_im)
-cv2.imshow("Original Image", im)
+#cv2.imshow("Equilateral Triangles", original_im)
+cv2.imshow("Original Image", im1)
 # window name will be Original Image
 
 cv2.waitKey(0)
