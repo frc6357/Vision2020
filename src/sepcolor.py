@@ -14,7 +14,7 @@ from src.dimension_check import *
 from src.longest_edge import *
 from src.draw_equilateral_triangle import *
 from src.find_tri_centroid import *
-
+from src.valid_lines import *
 
 ts_start = time.time()
 
@@ -116,9 +116,9 @@ for i in range(60, -1, -5):
 """
 for i in range(60, -1, -5):
     lines = cv2.HoughLines(edges, 1, np.pi / 180, i)
-
+    lines = check_valid(lines, 0.1)
     num_lines = len(lines)
-    if num_lines in range(8, 21):
+    if num_lines == 6:
         break
 
 #valid_line_test(lines, )

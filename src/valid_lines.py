@@ -13,6 +13,7 @@ def slope_check(input)
 """
 
 def check_valid(input, threshold):
+    print(input)
     angles = []
     parallels = []
 
