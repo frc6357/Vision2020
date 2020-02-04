@@ -1,6 +1,6 @@
 import math
 import cv2
-def draw_eq_tri(input):
+def ret_eq_tri(input):
     f, s = input
     x1, y1 = f[0], f[1]
     x2, y2 = s[0], s[1]

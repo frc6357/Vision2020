@@ -18,7 +18,7 @@ from valid_lines import *
 
 ts_start = time.time()
 
-im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-132in-Center.jpg")
+im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-156in-Center.jpg")
 h, w, d = im.shape
 print(h, "height")
 print(w, "width")
@@ -181,7 +181,7 @@ for point in points:
 #draws each intersection found from previous list comprehension
 
 cv2.imshow("intersections", im)
-'''
+
 triangles = [detect_tri(a) for a in itertools.combinations(slope_offset, 3)]
 """
 using the slopes and intercepts from slope offset detect_tri() finds all the lines that intersect 
@@ -202,7 +202,7 @@ tri_in_img = [a for a in tri_in_img if a[2] is not None]
 
 longest_edge = [longest_side(a) for a in tri_in_img]
 
-equ_tri = [draw_eq_tri(a) for a in longest_edge]
+equ_tri = [ret_eq_tri(a) for a in longest_edge]
 
 largest_triangle = [a for a in equ_tri]
 
@@ -213,14 +213,30 @@ while len(largest_triangle) > 1:
     largest_triangle = remov_dupl(largest_triangle)
 
 largest_triangle = [a for t in largest_triangle for a in t]
-
 original_im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-132in-Center.jpg")
 for a in largest_triangle:
     cv2.circle(original_im, a, 5, (0, 255, 255))
 
-centroid_point = centroid(largest_triangle)
+centroid_point_largest_tri = centroid(largest_triangle)
 
-cv2.circle(original_im, centroid_point, 5, (0, 255, 255))
+cv2.circle(original_im, centroid_point_largest_tri, 5, (255, 0, 255))
+
+smallest_triangle = [a for a in equ_tri]
+
+while len(smallest_triangle) > 1:
+    smallest_triangle = [min_tri(a) for a in itertools.combinations(smallest_triangle, 2)]
+    smallest_triangle = [a for a in smallest_triangle if a is not None]
+
+    smallest_triangle = remov_dupl(smallest_triangle)
+
+smallest_triangle = [a for t in smallest_triangle for a in t]
+
+original_im1 = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-132in-Center.jpg")
+for a in smallest_triangle:
+    cv2.circle(original_im1, a, 5, (0, 255, 255))
+centroid_point_smallesst_tri = centroid(smallest_triangle)
+cv2.circle(original_im1, centroid_point_smallesst_tri, 5, (255, 0, 255))
+cv2.imshow("smallest triangle", original_im1)
 
 """
 if all(tri_in_img) == False:
@@ -273,7 +289,7 @@ tri_m_np = np.array([a[0] for a in tri_m_b])
 tri_b_np = np.array([a[1] for a in tri_m_b])
 """
 
-'''
+
 
 # cv2.imshow() takes in a string that is windows name and then a variable that stores the image
 
@@ -288,7 +304,7 @@ ts_end = time.time()
 runtime = ts_end-ts_start
 print(runtime, "total time")
 
-#cv2.imshow("Equilateral Triangles", original_im)
+cv2.imshow("Equilateral Triangles", original_im)
 cv2.imshow("Original Image", im1)
 # window name will be Original Image
 

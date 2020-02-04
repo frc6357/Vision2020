@@ -6,7 +6,8 @@ def detect_tri(input):
     m1 = first[0]
     m2 = second[0]
     m3 = third[0]
-    accept_angles = [0, 1, 2, 3, 55, 56, 57, 58, 59]
+    accept_angles = [0, 1, 2, 3, 56, 57, 58, 59]
+    accept_angles_subtract = [0, 1, 2]
     theta1 = int(math.atan(m1) * 180/math.pi)
     theta_01 = theta1 if theta1 <= 180 else 360-theta1
     theta_01 = abs(theta_01)
@@ -22,27 +23,27 @@ def detect_tri(input):
     theta2 = theta2-theta_offset
     theta3 = theta3-theta_offset
 
-    if theta1-theta2 in accept_angles:
-        print(theta1-theta2)
+    if abs(theta1-theta2) in accept_angles_subtract:
+        print(theta1-theta2, "subtract")
         return None
-    if theta1-theta3 in accept_angles:
-        print(theta1-theta3)
+    if abs(theta1-theta3) in accept_angles_subtract:
+        print(theta1-theta3, "subtract")
         return None
-    if theta2-theta3 in accept_angles:
-        print(theta2-theta3)
+    if abs(theta2-theta3) in accept_angles_subtract:
+        print(theta2-theta3, "subtract")
         return None
 
     if (theta1 + theta2) % 60 not in accept_angles:
-        print((theta1 + theta2) % 60)
+        print((theta1 + theta2) % 60, "modulo")
         return None
 
     if (theta1 + theta3) % 60 not in accept_angles:
-        print((theta1 + theta3) % 60)
+        print((theta1 + theta3) % 60, "modulo")
         return None
 
 
     if (theta2 + theta3) % 60 not in accept_angles:
-        print((theta2 + theta3) % 60)
+        print((theta2 + theta3) % 60, "modulo")
         return None
 
 
