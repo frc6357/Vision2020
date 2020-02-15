@@ -18,9 +18,12 @@ from valid_lines import *
 from find_approx_m_0 import *
 from find_b import *
 from mb_2xy_points import *
+from largest_distance_2_points import *
+from center_hexagon import *
+
 ts_start = time.time()
 
-im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-084in-Center.jpg")
+im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-108in-Center.jpg")
 h, w, d = im.shape
 print(h, "height")
 print(w, "width")
@@ -172,18 +175,42 @@ flat_line_xy_points = mb_2xy_points(flat_line)
 x1_flat_line, y1_flat_line = int(flat_line_xy_points[0][0]), int(flat_line_xy_points[0][1])
 
 x2_flat_line, y2_flat_line = int(flat_line_xy_points[1][0]), int(flat_line_xy_points[1][1])
-im_another = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-084in-Center.jpg")
+im_another = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-108in-Center.jpg")
 
-cv2.line(im_another, (x1_flat_line, y1_flat_line), (x2_flat_line, y2_flat_line), (0, 255, 255), 1)
+#cv2.line(im_another, (x1_flat_line, y1_flat_line), (x2_flat_line, y2_flat_line), (0, 255, 255), 1)
+
+slope_offset_except_flat_line = [a for a in slope_offset if a != flat_line]
+intersections_w_flat_line = [solve_syseq([flat_line, a]) for a in slope_offset_except_flat_line]
+intersections_w_flat_line = [a for a in intersections_w_flat_line if a is not None]
+flat_line_max_distance = max_distance_between_points(intersections_w_flat_line)
+flat_line_max_d_points = max_distance_points(intersections_w_flat_line)
+
+flat_line_max_x1, flat_line_max_x2 = flat_line_max_d_points[0][0], flat_line_max_d_points[1][0]
+flat_line_max_y1, flat_line_max_y2 = flat_line_max_d_points[0][1], flat_line_max_d_points[1][1]
+
+cv2.line(im_another, (flat_line_max_x1, flat_line_max_y1), (flat_line_max_x2, flat_line_max_y2), (158, 111, 255), 1)
+
+for a in flat_line_max_d_points:
+    cv2.circle(im_another, a, 5, (158, 111, 255))
+
+
+hex_center_point = [find_hex_center(flat_line, flat_line_max_distance, flat_line_max_d_points)]
+hex_center_point = [(int(hex_center_point[0][0]), int(hex_center_point[0][1]))]
+#hex_center_point_mid = [(int(hex_center_point[0][0]), int(hex_center_point[0][1]))]
+#hex_mid_point_rotated = [(int(hex_center_point[1][0]), int(hex_center_point[1][1]))]
+#for a in hex_center_point_mid:
+#    cv2.circle(im_another, a, 5, (158, 111, 255))
+
+for a in hex_center_point:
+    cv2.circle(im_another, a, 5, (158, 111, 255))
 
 cv2.imshow("flattest line i think", im_another)
-cv2.waitKey(0)
-
+"""
 points = [solve_syseq(pair) for pair in itertools.combinations(slope_offset, 2)]
-"""
-takes slopes and intercepts from the slope_offset array and uses list comprehension
-to loop through each element and find the intersections between the lines
-"""
+
+#takes slopes and intercepts from the slope_offset array and uses list comprehension
+#to loop through each element and find the intersections between the lines
+
 
 points = [point for point in points if point is not None]
 #removes nones from the list
@@ -197,10 +224,10 @@ for point in points:
 cv2.imshow("intersections", im)
 
 triangles = [detect_tri(a) for a in itertools.combinations(slope_offset, 3)]
-"""
-using the slopes and intercepts from slope offset detect_tri() finds all the lines that intersect 
-and make regular triangles, using list comprehension to loop through each element 
-"""
+
+#using the slopes and intercepts from slope offset detect_tri() finds all the lines that intersect 
+#and make regular triangles, using list comprehension to loop through each element 
+
 triangles = [a for a in triangles if a is not None]
 
 
@@ -209,12 +236,14 @@ tri_points = [a for a in tri_points if a[0] is not None]
 tri_points = [a for a in tri_points if a[1] is not None]
 tri_points = [a for a in tri_points if a[2] is not None]
 tri_in_img = tri_points
-"""
+
+#checks if triangle points lie in image
+
 tri_in_img = [in_img(a, h, w) for a in tri_points]
 tri_in_img = [a for a in tri_in_img if a[0] is not None]
 tri_in_img = [a for a in tri_in_img if a[1] is not None]
 tri_in_img = [a for a in tri_in_img if a[2] is not None]
-"""
+
 longest_edge = [longest_side(a) for a in tri_in_img]
 
 equ_tri = [ret_eq_tri(a) for a in longest_edge]
@@ -228,7 +257,7 @@ while len(largest_triangle) > 1:
     largest_triangle = remov_dupl(largest_triangle)
 
 largest_triangle = [a for t in largest_triangle for a in t]
-original_im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-084in-Center.jpg")
+original_im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-224in-Center.jpg")
 for a in largest_triangle:
     cv2.circle(original_im, a, 5, (0, 255, 255))
 
@@ -248,62 +277,12 @@ while len(smallest_triangle) > 1:
 
 smallest_triangle = [a for t in smallest_triangle for a in t]
 
-original_im1 = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-084in-Center.jpg")
+original_im1 = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-224in-Center.jpg")
 for a in smallest_triangle:
     cv2.circle(original_im1, a, 5, (0, 255, 255))
 centroid_point_smallesst_tri = centroid(smallest_triangle)
 cv2.circle(original_im1, centroid_point_smallesst_tri, 5, (255, 0, 255))
 cv2.imshow("smallest triangle", original_im1)
-
-"""
-if all(tri_in_img) == False:
-    print("triangle is outside of image")
-    cv2.waitKey(0)
-    exit()
-"""
-
-"""
-largest_triangle = [a for a in tri_in_img]
-
-while len(largest_triangle) > 1:
-    largest_triangle = [max_tri(a) for a in itertools.combinations(largest_triangle, 2)]
-    largest_triangle = [a for a in largest_triangle if a is not None]
-
-    largest_triangle = remov_dupl(largest_triangle)
-
-largest_triangle = [a for t in largest_triangle for a in t]
-triangle = []
-
-smallest_triangle = [a for a in tri_in_img]
-
-while len(smallest_triangle) > 1:
-    smallest_triangle = [min_tri(a) for a in itertools.combinations(smallest_triangle, 2)]
-    smallest_triangle = [a for a in smallest_triangle if a is not None]
-
-    smallest_triangle = remov_dupl(smallest_triangle)
-
-smallest_triangle = [a for t in smallest_triangle for a in t]
-"""
-"""
-largest_triangle = [max_tri(a) for a in itertools.combinations(largest_triangle, 2)]
-largest_triangle = [a for a in largest_triangle if a is not None]
-largest_triangle = remov_dupl(largest_triangle)
-
-print(largest_triangle)
-
-for a in largest_triangle:
-    cv2.circle(im1, a, 5, (60, 255, 255))
-cv2.imshow("Largest Triangle", im1)
-
-for a in smallest_triangle:
-    cv2.circle(im2, a, 5, (60, 255, 255))
-cv2.imshow("Smallest Triangle", im2)
-
-"""
-"""
-tri_m_np = np.array([a[0] for a in tri_m_b])
-
-tri_b_np = np.array([a[1] for a in tri_m_b])
 """
 
 
@@ -320,9 +299,10 @@ im = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
 ts_end = time.time()
 runtime = ts_end-ts_start
 print(runtime, "total time")
-original_im2 = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-084in-Center.jpg")
-cv2.imshow("Equilateral Triangles", original_im2)
-cv2.imshow("Original Image", im1)
+#original_im2 = cv2.
+# ("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-224in-Center.jpg")
+#cv2.imshow("Equilateral Triangles", original_im2)
+#cv2.imshow("Original Image", im1)
 # window name will be Original Image
 
 cv2.waitKey(0)
