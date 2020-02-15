@@ -15,10 +15,12 @@ from longest_edge import *
 from draw_equilateral_triangle import *
 from find_tri_centroid import *
 from valid_lines import *
-
+from find_approx_m_0 import *
+from find_b import *
+from mb_2xy_points import *
 ts_start = time.time()
 
-im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-156in-Center.jpg")
+im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-084in-Center.jpg")
 h, w, d = im.shape
 print(h, "height")
 print(w, "width")
@@ -118,6 +120,7 @@ for i in range(60, -1, -5):
 
 for i in range(60,6,-5):
     lines = cv2.HoughLines(edges, 1, np.pi / 180, i)
+    lines = check_valid(lines, 0.1)
     if type(lines)!=str:
         lines = check_valid(lines, 0.1)
         lines = check_valid(lines, 0.1)
@@ -125,12 +128,11 @@ for i in range(60,6,-5):
         if num_lines == 6:
             break
 
-
 #valid_line_test(lines, )
 
 
-print("threshold of: ", i)
-print("number of lines: ", num_lines)
+#print("threshold of: ", i)
+#print("number of lines: ", num_lines)
 
 #need a check to make sure we find lines
 
@@ -153,7 +155,7 @@ for line in lines:
     m1 = (y2-y1)/(x2-x1)
     b1 = y1 - m1*x1
     slope_offset.append([m1, b1])
-    cv2.line(im, (x1, y1), (x2, y2), (0, 255, 255), 2)
+    cv2.line(im, (x1, y1), (x2, y2), (0, 255, 255), 1)
 """
 a for loop that takes the output from hough lines (rho, theta) and transforms them 
 into slopes and intercepts and appends them to an array  
@@ -163,7 +165,19 @@ into slopes and intercepts and appends them to an array
 im1 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
 im2 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
 
+flat_line = approx_0_slope(slope_offset)
+flat_line = find_b(flat_line[0], slope_offset)
+flat_line_xy_points = mb_2xy_points(flat_line)
 
+x1_flat_line, y1_flat_line = int(flat_line_xy_points[0][0]), int(flat_line_xy_points[0][1])
+
+x2_flat_line, y2_flat_line = int(flat_line_xy_points[1][0]), int(flat_line_xy_points[1][1])
+im_another = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-084in-Center.jpg")
+
+cv2.line(im_another, (x1_flat_line, y1_flat_line), (x2_flat_line, y2_flat_line), (0, 255, 255), 1)
+
+cv2.imshow("flattest line i think", im_another)
+cv2.waitKey(0)
 
 points = [solve_syseq(pair) for pair in itertools.combinations(slope_offset, 2)]
 """
@@ -194,17 +208,18 @@ tri_points = [mb_xy(a) for a in triangles]
 tri_points = [a for a in tri_points if a[0] is not None]
 tri_points = [a for a in tri_points if a[1] is not None]
 tri_points = [a for a in tri_points if a[2] is not None]
-
+tri_in_img = tri_points
+"""
 tri_in_img = [in_img(a, h, w) for a in tri_points]
 tri_in_img = [a for a in tri_in_img if a[0] is not None]
 tri_in_img = [a for a in tri_in_img if a[1] is not None]
 tri_in_img = [a for a in tri_in_img if a[2] is not None]
-
+"""
 longest_edge = [longest_side(a) for a in tri_in_img]
 
 equ_tri = [ret_eq_tri(a) for a in longest_edge]
 
-largest_triangle = [a for a in equ_tri]
+largest_triangle = [a for a in tri_points]
 
 while len(largest_triangle) > 1:
     largest_triangle = [max_tri(a) for a in itertools.combinations(largest_triangle, 2)]
@@ -213,7 +228,7 @@ while len(largest_triangle) > 1:
     largest_triangle = remov_dupl(largest_triangle)
 
 largest_triangle = [a for t in largest_triangle for a in t]
-original_im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-132in-Center.jpg")
+original_im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-084in-Center.jpg")
 for a in largest_triangle:
     cv2.circle(original_im, a, 5, (0, 255, 255))
 
@@ -221,7 +236,9 @@ centroid_point_largest_tri = centroid(largest_triangle)
 
 cv2.circle(original_im, centroid_point_largest_tri, 5, (255, 0, 255))
 
-smallest_triangle = [a for a in equ_tri]
+cv2.imshow("largest triangle", original_im)
+
+smallest_triangle = [a for a in tri_points]
 
 while len(smallest_triangle) > 1:
     smallest_triangle = [min_tri(a) for a in itertools.combinations(smallest_triangle, 2)]
@@ -231,7 +248,7 @@ while len(smallest_triangle) > 1:
 
 smallest_triangle = [a for t in smallest_triangle for a in t]
 
-original_im1 = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-132in-Center.jpg")
+original_im1 = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-084in-Center.jpg")
 for a in smallest_triangle:
     cv2.circle(original_im1, a, 5, (0, 255, 255))
 centroid_point_smallesst_tri = centroid(smallest_triangle)
@@ -303,8 +320,8 @@ im = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
 ts_end = time.time()
 runtime = ts_end-ts_start
 print(runtime, "total time")
-
-cv2.imshow("Equilateral Triangles", original_im)
+original_im2 = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-084in-Center.jpg")
+cv2.imshow("Equilateral Triangles", original_im2)
 cv2.imshow("Original Image", im1)
 # window name will be Original Image
 
