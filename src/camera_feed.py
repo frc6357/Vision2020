@@ -21,7 +21,7 @@ from largest_distance_2_points import *
 from center_hexagon import *
 
 ts_start = time.time()
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 ts_mid = time.time()
 
 print(ts_mid-ts_start, "seconds to start")
@@ -31,6 +31,8 @@ while True:
     ret, frame = cap.read()
 
     h, w, d = frame.shape
+
+    cv2.imshow("frame", frame)
 
     im = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -55,8 +57,8 @@ while True:
     image_upper_bound = bound_percent_cv2(120, 100, 97, 1.05)
     """
 
-    image_lower_bound = bound_percent_cv2(153, 100, 81, 0.7)
-    image_upper_bound = bound_percent_cv2(153, 100, 81, 1.3)
+    image_lower_bound = bound_percent_cv2(145, 100, 99, 0.7)
+    image_upper_bound = bound_percent_cv2(145, 100, 99, 1.3)
 
     """
     cv2.inRange() takes in a variable storing a read image, lower bound, and upper bound
@@ -128,80 +130,86 @@ while True:
             lines = check_valid(lines, 0.1)
             num_lines = len(lines)
             if num_lines == 6:
-                break
 
-    # valid_line_test(lines, )
+                # valid_line_test(lines, )
 
-    # print("threshold of: ", i)
-    # print("number of lines: ", num_lines)
+                # print("threshold of: ", i)
+                # print("number of lines: ", num_lines)
 
-    # need a check to make sure we find lines
+                # need a check to make sure we find lines
 
-    points = []
-    slope_offset = []
-    for line in lines:
-        rho, theta = line[0]
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a * rho
-        y0 = b * rho
+                points = []
+                slope_offset = []
+                for line in lines:
+                    rho, theta = line[0]
+                    a = np.cos(theta)
+                    b = np.sin(theta)
+                    x0 = a * rho
+                    y0 = b * rho
 
-        x1 = int(x0 + 1000 * (-b))
-        y1 = int(y0 + 1000 * (a))
-        x2 = int(x0 - 1000 * (-b))
-        y2 = int(y0 - 1000 * (a))
-        if x2 == x1:
-            continue
-        m1 = (y2 - y1) / (x2 - x1)
-        b1 = y1 - m1 * x1
-        slope_offset.append([m1, b1])
-        cv2.line(im, (x1, y1), (x2, y2), (0, 255, 255), 1)
-    """
-    a for loop that takes the output from hough lines (rho, theta) and transforms them 
-    into slopes and intercepts and appends them to an array  
-    """
+                    x1 = int(x0 + 1000 * (-b))
+                    y1 = int(y0 + 1000 * (a))
+                    x2 = int(x0 - 1000 * (-b))
+                    y2 = int(y0 - 1000 * (a))
+                    if x2 == x1:
+                        continue
+                    m1 = (y2 - y1) / (x2 - x1)
+                    b1 = y1 - m1 * x1
+                    slope_offset.append([m1, b1])
+                    cv2.line(im, (x1, y1), (x2, y2), (0, 255, 255), 1)
+                """
+                a for loop that takes the output from hough lines (rho, theta) and transforms them 
+                into slopes and intercepts and appends them to an array  
+                """
 
-    im1 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
-    im2 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+                im1 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+                im2 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
 
-    flat_line = approx_0_slope(slope_offset)
-    flat_line = find_b(flat_line[0], slope_offset)
-    flat_line_xy_points = mb_2xy_points(flat_line)
+                flat_line = approx_0_slope(slope_offset)
+                flat_line = find_b(flat_line[0], slope_offset)
+                flat_line_xy_points = mb_2xy_points(flat_line)
 
-    x1_flat_line, y1_flat_line = int(flat_line_xy_points[0][0]), int(flat_line_xy_points[0][1])
+                x1_flat_line, y1_flat_line = int(flat_line_xy_points[0][0]), int(flat_line_xy_points[0][1])
 
-    x2_flat_line, y2_flat_line = int(flat_line_xy_points[1][0]), int(flat_line_xy_points[1][1])
-    im_another = frame
+                x2_flat_line, y2_flat_line = int(flat_line_xy_points[1][0]), int(flat_line_xy_points[1][1])
+                im_another = frame
 
-    # cv2.line(im_another, (x1_flat_line, y1_flat_line), (x2_flat_line, y2_flat_line), (0, 255, 255), 1)
+                # cv2.line(im_another, (x1_flat_line, y1_flat_line), (x2_flat_line, y2_flat_line), (0, 255, 255), 1)
 
-    slope_offset_except_flat_line = [a for a in slope_offset if a != flat_line]
-    intersections_w_flat_line = [solve_syseq([flat_line, a]) for a in slope_offset_except_flat_line]
-    intersections_w_flat_line = [a for a in intersections_w_flat_line if a is not None]
-    flat_line_max_distance = max_distance_between_points(intersections_w_flat_line)
-    flat_line_max_d_points = max_distance_points(intersections_w_flat_line)
+                slope_offset_except_flat_line = [a for a in slope_offset if a != flat_line]
+                intersections_w_flat_line = [solve_syseq([flat_line, a]) for a in slope_offset_except_flat_line]
+                intersections_w_flat_line = [a for a in intersections_w_flat_line if a is not None]
+                flat_line_max_distance = max_distance_between_points(intersections_w_flat_line)
+                flat_line_max_d_points = max_distance_points(intersections_w_flat_line)
 
-    flat_line_max_x1, flat_line_max_x2 = flat_line_max_d_points[0][0], flat_line_max_d_points[1][0]
-    flat_line_max_y1, flat_line_max_y2 = flat_line_max_d_points[0][1], flat_line_max_d_points[1][1]
+                flat_line_max_x1, flat_line_max_x2 = flat_line_max_d_points[0][0], flat_line_max_d_points[1][0]
+                flat_line_max_y1, flat_line_max_y2 = flat_line_max_d_points[0][1], flat_line_max_d_points[1][1]
 
-    cv2.line(im_another, (flat_line_max_x1, flat_line_max_y1), (flat_line_max_x2, flat_line_max_y2), (158, 111, 255), 1)
+                cv2.line(im_another, (flat_line_max_x1, flat_line_max_y1), (flat_line_max_x2, flat_line_max_y2),
+                         (158, 111, 255), 1)
 
-    for a in flat_line_max_d_points:
-        cv2.circle(im_another, a, 5, (158, 111, 255))
+                for a in flat_line_max_d_points:
+                    cv2.circle(im_another, a, 5, (158, 111, 255))
 
-    hex_center_point = [find_hex_center(flat_line, flat_line_max_distance, flat_line_max_d_points)]
-    hex_center_point = [(int(hex_center_point[0][0]), int(hex_center_point[0][1]))]
-    # hex_center_point_mid = [(int(hex_center_point[0][0]), int(hex_center_point[0][1]))]
-    # hex_mid_point_rotated = [(int(hex_center_point[1][0]), int(hex_center_point[1][1]))]
-    # for a in hex_center_point_mid:
-    #    cv2.circle(im_another, a, 5, (158, 111, 255))
+                hex_center_point = [find_hex_center(flat_line, flat_line_max_distance, flat_line_max_d_points)]
+                hex_center_point = [(int(hex_center_point[0][0]), int(hex_center_point[0][1]))]
+                # hex_center_point_mid = [(int(hex_center_point[0][0]), int(hex_center_point[0][1]))]
+                # hex_mid_point_rotated = [(int(hex_center_point[1][0]), int(hex_center_point[1][1]))]
+                # for a in hex_center_point_mid:
+                #    cv2.circle(im_another, a, 5, (158, 111, 255))
 
-    for a in hex_center_point:
-        cv2.circle(im_another, a, 5, (158, 111, 255))
+                for a in hex_center_point:
+                    cv2.circle(im_another, a, 5, (158, 111, 255))
+                cv2.imshow("hexagon-center-please", im_another)
+                if cv2.waitKey(1) & 0xFF == ord('l'):
+                    cv2.destroyWindow("hexagon-center-please")
+                    break
 
-    cv2.imshow("flattest line i think", im_another)
+        elif type(lines) == str:
+            break
 
-    cv2.waitKey(0)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
 
 
