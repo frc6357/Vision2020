@@ -23,6 +23,7 @@ from angle_offset import *
 
 ts_start = time.time()
 cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_EXPOSURE, -9)
 ts_mid = time.time()
 
 stop_var = 1
@@ -34,6 +35,8 @@ while True:
     ret, frame = cap.read()
 
     h, w, d = frame.shape
+
+    #cv2.circle(frame, (320, 240), 5, (248, 26, 225))
 
     cv2.imshow("frame", frame)
 
@@ -60,8 +63,8 @@ while True:
     image_upper_bound = bound_percent_cv2(120, 100, 97, 1.05)
     """
 
-    image_lower_bound = bound_percent_cv2(0, 0, 99, 0.7)
-    image_upper_bound = bound_percent_cv2(0, 0, 99, 1.3)
+    image_lower_bound = bound_percent_cv2(167, 41, 73, 0.8)
+    image_upper_bound = bound_percent_cv2(167, 41, 73, 1.2)
 
     """
     cv2.inRange() takes in a variable storing a read image, lower bound, and upper bound
@@ -127,6 +130,8 @@ while True:
             break
     """
 
+
+
     for i in range(60, 6, -5):
         lines = cv2.HoughLines(edges, 1, np.pi / 180, i)
         lines = check_valid(lines, 0.1)
@@ -134,9 +139,11 @@ while True:
             lines = check_valid(lines, 0.1)
             lines = check_valid(lines, 0.1)
             num_lines = len(lines)
-            if len(slope_offset) != 6:
-                break
+
             if num_lines == 6:
+
+
+                print("there are 6 lines")
                 # valid_line_test(lines, )
 
                 # print("threshold of: ", i)
@@ -160,12 +167,18 @@ while True:
                     m1 = (y2 - y1) / (x2 - x1)
                     b1 = y1 - m1 * x1
                     slope_offset.append([m1, b1])
+
                     #cv2.line(im, (x1, y1), (x2, y2), (0, 255, 255), 1)
-                im1 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
-                im2 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+                #im1 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+                #im2 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+
+
 
                 flat_line = approx_0_slope(slope_offset)
                 flat_line = find_b(flat_line[0], slope_offset)
+
+
+
                 flat_line_xy_points = mb_2xy_points(flat_line)
 
                 x1_flat_line, y1_flat_line = int(flat_line_xy_points[0][0]), int(flat_line_xy_points[0][1])
@@ -191,9 +204,7 @@ while True:
                     #cv2.circle(im_another, a, 5, (158, 111, 255))
 
                 hex_center_point = [find_hex_center(flat_line, flat_line_max_distance, flat_line_max_d_points)]
-                print(len(hex_center_point), "hcp len 0")
                 hex_center_point = [(int(hex_center_point[0][0]), int(hex_center_point[0][1]))]
-                print(len(hex_center_point), "hcp len 1")
 
 
                 # hex_center_point_mid = [(int(hex_center_point[0][0]), int(hex_center_point[0][1]))]
@@ -206,24 +217,30 @@ while True:
                 # cv2.imshow("hexagon-center-please", im_another)
                 # if cv2.waitKey(1) & 0xFF == ord('l'):
                 # cv2.destroyWindow("hexagon-center-please")
-                # break
+                # breakssssssssssss
+
+
+
                 x_val = hex_center_point[0][0]
-                print(x_val, "x val")
                 d_ish = w/2
-                print(d_ish, "d ish")
+
                 px = d_ish - x_val
-                print(px, "px pre")
+
                 px = px * 0.055
-                print(px, "px post")
-                """
-                a for loop that takes the output from hough lines (rho, theta) and transforms them 
-                into slopes and intercepts and appends them to an array  
-                """
+                print(px, "degrees")
+
+                slope_offset.clear()
+
         #elif type(lines) == str:
             #break
         else:
+
             break
     if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+    if cv2.waitKey(1) & 0xFF == ord('s'):
+        cv2.imwrite("frame.jpg", frame)
         break
 
 
