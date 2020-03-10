@@ -6,7 +6,7 @@ def detect_tri(input):
     m1 = first[0]
     m2 = second[0]
     m3 = third[0]
-    accept_angles = [0, 1, 2, 3, 56, 57, 58, 59]
+    accept_angles = [0, 1, 2, 3, 55, 56, 57, 58, 59]
     accept_angles_subtract = [0, 1, 2]
     theta1 = int(math.atan(m1) * 180/math.pi)
     theta_01 = theta1 if theta1 <= 180 else 360-theta1

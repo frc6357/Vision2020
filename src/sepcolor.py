@@ -20,10 +20,14 @@ from find_b import *
 from mb_2xy_points import *
 from largest_distance_2_points import *
 from center_hexagon import *
+from angle_offset import *
+from horizontal_distance_away import *
 
 ts_start = time.time()
 
-im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-108in-Center.jpg")
+im = cv2.imread("frame.jpg")
+im_another = cv2.imread("frame.jpg")
+
 h, w, d = im.shape
 print(h, "height")
 print(w, "width")
@@ -53,8 +57,8 @@ Ex: input HSV = [120, 100, 97] and threshold image by +5%
 image_upper_bound = bound_percent_cv2(120, 100, 97, 1.05)
 """
 
-image_lower_bound = bound_percent_cv2(153, 100, 81, 0.7)
-image_upper_bound = bound_percent_cv2(153, 100, 81, 1.3)
+image_lower_bound = bound_percent_cv2(167, 98, 73, 0.8)
+image_upper_bound = bound_percent_cv2(167, 98, 73, 1.2)
 
 """
 cv2.inRange() takes in a variable storing a read image, lower bound, and upper bound
@@ -72,17 +76,16 @@ back to BGR in order to display interpretable images
 """
 
 imageFiltered = cv2.cvtColor(imageFiltered, cv2.COLOR_HSV2BGR)
-
-#cv2.imshow("Filtered Image", imageFiltered)
+cv2.imshow("Filtered Image", imageFiltered)
 
 #Converts BGR to Grayscale image in preparation for thresholding by making a bimodal image
 
 grayscale_im = cv2.cvtColor(imageFiltered, cv2.COLOR_BGR2GRAY)
-#cv2.imshow("Grayscale Image", grayscale_im)
+cv2.imshow("Grayscale Image", grayscale_im)
 
 ret2, th2 = cv2.threshold(grayscale_im, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
-#cv2.imshow("Grayscale Otsu Thresholded Image", th2)
+cv2.imshow("Grayscale Otsu Thresholded Image", th2)
 """
 laplacian = cv2.Laplacian(grayscale_im, cv2.CV_64F)
 
@@ -130,6 +133,9 @@ for i in range(60,6,-5):
         num_lines = len(lines)
         if num_lines == 6:
             break
+    else:
+        print("not enough lines found")
+        quit()
 
 #valid_line_test(lines, )
 
@@ -175,7 +181,6 @@ flat_line_xy_points = mb_2xy_points(flat_line)
 x1_flat_line, y1_flat_line = int(flat_line_xy_points[0][0]), int(flat_line_xy_points[0][1])
 
 x2_flat_line, y2_flat_line = int(flat_line_xy_points[1][0]), int(flat_line_xy_points[1][1])
-im_another = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-108in-Center.jpg")
 
 #cv2.line(im_another, (x1_flat_line, y1_flat_line), (x2_flat_line, y2_flat_line), (0, 255, 255), 1)
 
@@ -183,6 +188,9 @@ slope_offset_except_flat_line = [a for a in slope_offset if a != flat_line]
 intersections_w_flat_line = [solve_syseq([flat_line, a]) for a in slope_offset_except_flat_line]
 intersections_w_flat_line = [a for a in intersections_w_flat_line if a is not None]
 flat_line_max_distance = max_distance_between_points(intersections_w_flat_line)
+
+print(flat_line_max_distance, "flat line max distance")
+
 flat_line_max_d_points = max_distance_points(intersections_w_flat_line)
 
 flat_line_max_x1, flat_line_max_x2 = flat_line_max_d_points[0][0], flat_line_max_d_points[1][0]
@@ -204,7 +212,16 @@ hex_center_point = [(int(hex_center_point[0][0]), int(hex_center_point[0][1]))]
 for a in hex_center_point:
     cv2.circle(im_another, a, 5, (158, 111, 255))
 
+px = find_deg(hex_center_point, w, flat_line_max_distance)
+
+#center of image
+cv2.circle(im_another, (320, 240), 5, (248, 26, 225))
+
+print(px, "horiztontal offest")
+
 cv2.imshow("flattest line i think", im_another)
+
+
 """
 points = [solve_syseq(pair) for pair in itertools.combinations(slope_offset, 2)]
 

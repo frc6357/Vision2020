@@ -7,4 +7,4 @@ def mb_2xy_points(input):
     y1 = f*x1 + s
 
     y2 = f*x2 + s
-    return([x1, y1], [x2, y2])
+    return ([x1, y1], [x2, y2])

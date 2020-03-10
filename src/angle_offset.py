@@ -1,6 +1,11 @@
-def find_deg(input, w, n):
+def find_deg(input, w, d):
     x_val = input[0][0]
 
-    px = (w/2 - x_val) * n
+    print(x_val, "x_val")
+
+    px = (x_val - w/2)
+    print(px, "difference img width and x_val")
+
+    px = px * 19.625/d
 
     return px

@@ -3,17 +3,41 @@ import cv2
 import time
 import itertools
 import numpy as np
-from src.create_bound import *
-from src.systemeq import *
-from src.reg_triangle_detect import *
-from src.mb_to_xy import *
-from src.largest_triangle import *
-from src.removeDuplicates import *
-from src.smallest_triangle import *
+from create_bound import *
+from systemeq import *
+from reg_triangle_detect import *
+from mb_to_xy import *
+from largest_triangle import *
+from removeDuplicates import *
+from smallest_triangle import *
+from dimension_check import *
+from longest_edge import *
+from draw_equilateral_triangle import *
+from find_tri_centroid import *
+from valid_lines import *
+from find_approx_m_0 import *
+from find_b import *
+from mb_2xy_points import *
+from largest_distance_2_points import *
+from center_hexagon import *
+from angle_offset import *
+from horizontal_distance_away import *
+
 ts_start = time.time()
 
-im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-156in-Center.jpg")
+im = cv2.imread("retro-reflect-10tfup-0ftright-2.5ms.jpg")
+im_original = cv2.imread("retro-reflect-10tfup-0ftright-2.5ms.jpg")
+im_another = cv2.imread("retro-reflect-10tfup-0ftright-2.5ms.jpg")
 
+print(im)
+print("new line")
+print("new line")
+print("new line")
+print(im_another)
+h, w, d = im.shape
+print(h, "height")
+print(w, "width")
+print(d, "depth")
 
 
 """
@@ -27,6 +51,7 @@ this will read the image stored in im that is currently in the BGR color space
 and convert all pixels to HLS
 """
 im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
+im3 = im
 
 
 # upper bound +5%: HSV (171.15, 105, 91.875)
@@ -38,8 +63,8 @@ Ex: input HSV = [120, 100, 97] and threshold image by +5%
 image_upper_bound = bound_percent_cv2(120, 100, 97, 1.05)
 """
 
-image_lower_bound = bound_percent_cv2(153, 100, 81, 0.7)
-image_upper_bound = bound_percent_cv2(153, 100, 81, 1.3)
+image_lower_bound = bound_percent_cv2(172, 45, 83, 0.8)
+image_upper_bound = bound_percent_cv2(172, 45, 83, 1.2)
 
 """
 cv2.inRange() takes in a variable storing a read image, lower bound, and upper bound
@@ -57,6 +82,7 @@ back to BGR in order to display interpretable images
 """
 
 imageFiltered = cv2.cvtColor(imageFiltered, cv2.COLOR_HSV2BGR)
+cv2.imshow("Filtered Image", imageFiltered)
 
 #Converts BGR to Grayscale image in preparation for thresholding by making a bimodal image
 
@@ -66,8 +92,234 @@ cv2.imshow("Grayscale Image", grayscale_im)
 ret2, th2 = cv2.threshold(grayscale_im, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
 cv2.imshow("Grayscale Otsu Thresholded Image", th2)
+"""
+laplacian = cv2.Laplacian(grayscale_im, cv2.CV_64F)
 
+cv2.imshow("Laplacian Edge Detect", laplacian)
+
+sobelx = cv2.Sobel(grayscale_im,cv2.CV_64F,1,0,ksize=3)
+
+abs_sobel64f = np.absolute(sobelx)
+sobelx_8u = np.uint8(abs_sobel64f)
+
+cv2.imshow("Sobel X Edge Detect", sobelx_8u)
+
+sobely = cv2.Sobel(grayscale_im,cv2.CV_64F,0,1,ksize=3)
+
+abs_sobel64f = np.absolute(sobely)
+sobely_8u = np.uint8(abs_sobel64f)
+
+
+cv2.imshow("Sobel Y Edge Detect", sobely_8u)
+"""
 edges = cv2.Canny(th2, 100, 200)
 
-cv2.imshow("Canny Edge Detection", edges)
+#cv2.imshow("Canny Edge Detection", edges)
+
+
+
+lines = []
+"""
+for i in range(60, -1, -5):
+    lines = cv2.HoughLines(edges, 1, np.pi / 180, i)
+    num_lines = len(lines)
+    if num_lines in range(8, 21):
+        new_list = [a[0, 1] for a in lines]
+        valid_lines = valid_line_test(lines, new_list)
+        break
+"""
+
+
+for i in range(60,6,-5):
+    lines = cv2.HoughLines(edges, 1, np.pi / 180, i)
+    lines = check_valid(lines, 0.1)
+    if type(lines)!=str:
+        lines = check_valid(lines, 0.1)
+        lines = check_valid(lines, 0.1)
+        num_lines = len(lines)
+        if num_lines == 6:
+            break
+    else:
+        print("not enough lines found")
+        quit()
+
+#valid_line_test(lines, )
+
+
+#print("threshold of: ", i)
+#print("number of lines: ", num_lines)
+
+#need a check to make sure we find lines
+
+
+points = []
+slope_offset = []
+for line in lines:
+    rho, theta = line[0]
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a*rho
+    y0 = b*rho
+
+    x1 = int(x0 + 1000*(-b))
+    y1 = int(y0 + 1000*(a))
+    x2 = int(x0 - 1000*(-b))
+    y2 = int(y0 - 1000*(a))
+    if x2 == x1:
+        continue
+    m1 = (y2-y1)/(x2-x1)
+    b1 = y1 - m1*x1
+    slope_offset.append([m1, b1])
+    cv2.line(im_original, (x1, y1), (x2, y2), (0, 255, 255), 1)
+
+im1 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+im2 = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+
+flat_line = approx_0_slope(slope_offset)
+flat_line = find_b(flat_line[0], slope_offset)
+flat_line_xy_points = mb_2xy_points(flat_line)
+
+x1_flat_line, y1_flat_line = int(flat_line_xy_points[0][0]), int(flat_line_xy_points[0][1])
+
+x2_flat_line, y2_flat_line = int(flat_line_xy_points[1][0]), int(flat_line_xy_points[1][1])
+
+#cv2.line(im_another, (x1_flat_line, y1_flat_line), (x2_flat_line, y2_flat_line), (0, 255, 255), 1)
+
+slope_offset_except_flat_line = [a for a in slope_offset if a != flat_line]
+intersections_w_flat_line = [solve_syseq([flat_line, a]) for a in slope_offset_except_flat_line]
+intersections_w_flat_line = [a for a in intersections_w_flat_line if a is not None]
+for a in intersections_w_flat_line:
+    cv2.circle(im_original, a, 5, (158, 111, 255))
+
+cv2.imshow("lines", im_original)
+flat_line_max_distance = max_distance_between_points(intersections_w_flat_line)
+
+print(flat_line_max_distance, "flat line max distance")
+
+flat_line_max_d_points = max_distance_points(intersections_w_flat_line)
+
+flat_line_max_x1, flat_line_max_x2 = flat_line_max_d_points[0][0], flat_line_max_d_points[1][0]
+flat_line_max_y1, flat_line_max_y2 = flat_line_max_d_points[0][1], flat_line_max_d_points[1][1]
+
+cv2.line(im_another, (flat_line_max_x1, flat_line_max_y1), (flat_line_max_x2, flat_line_max_y2), (158, 111, 255), 1)
+
+
+for a in flat_line_max_d_points:
+    cv2.circle(im_another, a, 5, (158, 111, 255))
+
+
+hex_center_point = [find_hex_center(flat_line, flat_line_max_distance, flat_line_max_d_points)]
+hex_center_point = [(int(hex_center_point[0][0]), int(hex_center_point[0][1]))]
+#hex_center_point_mid = [(int(hex_center_point[0][0]), int(hex_center_point[0][1]))]
+#hex_mid_point_rotated = [(int(hex_center_point[1][0]), int(hex_center_point[1][1]))]
+#for a in hex_center_point_mid:
+#    cv2.circle(im_another, a, 5, (158, 111, 255))
+
+for a in hex_center_point:
+    cv2.circle(im_another, a, 5, (158, 111, 255))
+
+px = find_deg(hex_center_point, w, flat_line_max_distance)
+
+print(px, "horiztontal offest")
+
+
+
+cv2.imshow("flattest line i think", im_another)
+
+
+"""
+points = [solve_syseq(pair) for pair in itertools.combinations(slope_offset, 2)]
+
+#takes slopes and intercepts from the slope_offset array and uses list comprehension
+#to loop through each element and find the intersections between the lines
+
+
+points = [point for point in points if point is not None]
+#removes nones from the list
+
+im = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+
+for point in points:
+    cv2.circle(im, point, 5, (60, 255, 255))
+#draws each intersection found from previous list comprehension
+
+cv2.imshow("intersections", im)
+
+triangles = [detect_tri(a) for a in itertools.combinations(slope_offset, 3)]
+
+#using the slopes and intercepts from slope offset detect_tri() finds all the lines that intersect 
+#and make regular triangles, using list comprehension to loop through each element 
+
+triangles = [a for a in triangles if a is not None]
+
+
+tri_points = [mb_xy(a) for a in triangles]
+tri_points = [a for a in tri_points if a[0] is not None]
+tri_points = [a for a in tri_points if a[1] is not None]
+tri_points = [a for a in tri_points if a[2] is not None]
+tri_in_img = tri_points
+
+#checks if triangle points lie in image
+
+tri_in_img = [in_img(a, h, w) for a in tri_points]
+tri_in_img = [a for a in tri_in_img if a[0] is not None]
+tri_in_img = [a for a in tri_in_img if a[1] is not None]
+tri_in_img = [a for a in tri_in_img if a[2] is not None]
+
+longest_edge = [longest_side(a) for a in tri_in_img]
+
+equ_tri = [ret_eq_tri(a) for a in longest_edge]
+
+largest_triangle = [a for a in tri_points]
+
+while len(largest_triangle) > 1:
+    largest_triangle = [max_tri(a) for a in itertools.combinations(largest_triangle, 2)]
+    largest_triangle = [a for a in largest_triangle if a is not None]
+
+    largest_triangle = remov_dupl(largest_triangle)
+
+largest_triangle = [a for t in largest_triangle for a in t]
+original_im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-224in-Center.jpg")
+for a in largest_triangle:
+    cv2.circle(original_im, a, 5, (0, 255, 255))
+
+centroid_point_largest_tri = centroid(largest_triangle)
+
+cv2.circle(original_im, centroid_point_largest_tri, 5, (255, 0, 255))
+
+cv2.imshow("largest triangle", original_im)
+
+smallest_triangle = [a for a in tri_points]
+
+while len(smallest_triangle) > 1:
+    smallest_triangle = [min_tri(a) for a in itertools.combinations(smallest_triangle, 2)]
+    smallest_triangle = [a for a in smallest_triangle if a is not None]
+
+    smallest_triangle = remov_dupl(smallest_triangle)
+
+smallest_triangle = [a for t in smallest_triangle for a in t]
+
+original_im1 = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-224in-Center.jpg")
+for a in smallest_triangle:
+    cv2.circle(original_im1, a, 5, (0, 255, 255))
+centroid_point_smallesst_tri = centroid(smallest_triangle)
+cv2.circle(original_im1, centroid_point_smallesst_tri, 5, (255, 0, 255))
+cv2.imshow("smallest triangle", original_im1)
+"""
+
+
+
+# cv2.imshow() takes in a string that is windows name and then a variable that stores the image
+
+
+
+# window name will be Filtered Image
+
+im = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+
+
+ts_end = time.time()
+runtime = ts_end-ts_start
+print(runtime, "total time")
+
 cv2.waitKey(0)

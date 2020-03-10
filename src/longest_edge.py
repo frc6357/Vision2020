@@ -1,5 +1,4 @@
 import math
-import mpmath
 def longest_side(input):
     first, second, third = input
     x1, y1 = first[0], first[1]

@@ -1,5 +1,4 @@
 import math
-import cv2
 def ret_eq_tri(input):
     f, s = input
     x1, y1 = f[0], f[1]

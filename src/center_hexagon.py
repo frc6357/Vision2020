@@ -10,9 +10,6 @@ def find_hex_center(input, input2, input1):
     y_mid = (y_max + y_min)/2
 
     y_d =  input2/2 * math.sqrt(3)
-    print(input2)
-
-    print(y_mid)
 
     y_plz_work = y_mid - y_d
 
