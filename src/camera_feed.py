@@ -1,8 +1,10 @@
 import cv2
 import time
+
 import itertools
 import numpy as np
 from create_bound import *
+"""
 from systemeq import *
 from reg_triangle_detect import *
 from mb_to_xy import *
@@ -20,11 +22,11 @@ from mb_2xy_points import *
 from largest_distance_2_points import *
 from center_hexagon import *
 from angle_offset import *
-import math
+import maths
 import socket
-
+"""
 ts_start = time.time()
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 cap.set(cv2.CAP_PROP_EXPOSURE, -9)
 ts_mid = time.time()
 
@@ -54,10 +56,10 @@ while True:
     this will read the image stored in im that is currently in the BGR color space
     and convert all pixels to HLS
     """
-    im3 = im
-
-    # upper bound +5%: HSV (171.15, 105, 91.875)
-    # lower bound -5%: HSV (154.85, 95, 83.125)
+    #im3 = im
+    # test 1 HSV color value: (173 deg, 48%, 76%)
+    # upper bound +5%:
+    # lower bound -5%:
 
     """
     bound_percent_cv2 method takes Hue(h), Saturation(s), Brightness(v), Threshold Percent(in decimal form so 100% = 1.0
@@ -65,8 +67,8 @@ while True:
     image_upper_bound = bound_percent_cv2(120, 100, 97, 1.05)
     """
 
-    image_lower_bound = bound_percent_cv2(167, 41, 73, 0.8)
-    image_upper_bound = bound_percent_cv2(167, 41, 73, 1.2)
+    image_lower_bound = bound_percent_cv2(173, 100, 76, 0.8)
+    image_upper_bound = bound_percent_cv2(173, 100, 76, 1.2)
 
     """
     cv2.inRange() takes in a variable storing a read image, lower bound, and upper bound
@@ -82,36 +84,92 @@ while True:
     so after filtering the image in HSV color space the script needs to convert
     back to BGR in order to display interpretable images
     """
-
     imageFiltered = cv2.cvtColor(imageFiltered, cv2.COLOR_HSV2BGR)
+    #cv2.imshow("Filtered Image", imageFiltered)
 
-    # cv2.imshow("Filtered Image", imageFiltered)
-
-    # Converts BGR to Grayscale image in preparation for thresholding by making a bimodal image
-
+    # Converts BGR to Grayscale image in preparation for thresholding by making a high contrast image
     grayscale_im = cv2.cvtColor(imageFiltered, cv2.COLOR_BGR2GRAY)
     # cv2.imshow("Grayscale Image", grayscale_im)
 
+    # uses OTSU and Binary Thresholding methods to maximize contrast in filtered image
     ret2, th2 = cv2.threshold(grayscale_im, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    #cv2.imshow("Grayscale Otsu Thresholded Image", th2)
 
-    # cv2.imshow("Grayscale Otsu Thresholded Image", th2)
-
+    # uses canny edge detection to find the edges of segmented image
     edges = cv2.Canny(th2, 100, 200)
+    cv2.imshow("Canny Edge Detection", edges)
 
-    # cv2.imshow("Canny Edge Detection", edges)
+    lines = cv2.HoughLines(edges, 1, np.pi / 180, 25)
+    color_lines = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+    if lines is not None:
+        lines = [line[0] for line in lines]
 
+        buckets_of_similar_lines = []
+        ## Pass the result of this function back into it until the result returns len 0
+        def filter_lines(lines):
+            next_set_to_process = []
+            matching_set = [lines[0]]
+            rho, theta = lines[0]
+            for x in lines[1:]:
+                if threshold_function(x, lines[0]):
+                    matching_set.append(x)
+                else:
+                    next_set_to_process.append(x)
+            buckets_of_similr_lines.append(matching_set)
+            return next_set_to_process
+
+        # Heres what the call looks like
+        lines  = []
+        while(len(lines)>0):
+            lines = filter_lines(lines)
+        #at this point buckets_of_similar_lines is a list of lists where each element needs to be processed for average rho theta
+
+
+
+
+
+
+        for line in lines:
+            rho, theta = line
+            a = np.cos(theta)
+            b = np.sin(theta)
+            x0 = a*rho
+            y0 = b*rho
+            x1 = int(x0 + 1000*(-b))
+            y1 = int(y0 + 1000*(a))
+            x2 = int(x0 - 1000*(-b))
+            y2 = int(y0 - 1000*(a))
+
+            cv2.line(color_lines,(x1,y1),(x2,y2),(0,0,255),2)
+    cv2.imshow("lines", color_lines)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+    if cv2.waitKey(1) & 0xFF == ord('s'):
+        print("image saved")
+        cv2.imwrite("frame.jpg", frame)
+        break
+"""
+    # initailizes lists for lists, points and slope offset
     lines = []
     points = []
     slope_offset = []
 
+    # finds the lines in the Canny Edge detection image based on number of pixels in line
+    # the for loop iterator, i, decreases the number of pixels required to detect a line
+    # parameter 2 is the pixel accuracy (1 pixel), and parameter 2 is the angle accuracy (1 deg)
     for i in range(60, 6, -5):
         lines = cv2.HoughLines(edges, 1, np.pi / 180, i)
+
+        # checks if the lines are parallel or lines are duplicates
         lines = check_valid(lines, 0.1)
         if type(lines) != str:
+            # repeat the check twice (not sure why??)
             lines = check_valid(lines, 0.1)
             lines = check_valid(lines, 0.1)
             num_lines = len(lines)
-
+            # if lines are not 6 than there are more than identified in image -> ROI is half of a hexagon
             if num_lines == 6:
 
 
@@ -180,12 +238,8 @@ while True:
         else:
 
             break
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-    if cv2.waitKey(1) & 0xFF == ord('s'):
-        cv2.imwrite("frame.jpg", frame)
-        break
+            
+    """
 
 
 
