@@ -1,19 +1,14 @@
 import socket
 
-udp_ip = "192.168.86.44"
-# laptop ipv4 address
-udp_port = 5005
-# udp port on laptop inbound rule
+udp_ip = "10.63.57.2"
+# RoboRIO ip address: 10.TE.AM.2
 
-local_ip = "192.168.86.37"
-# RPi ip address
-# I think I can delete this
+udp_port = 5800
+# Available bi-directionl UDP/TCP ports on RoboRIO: 5800-5810
 
-local_port = 9999
-# registered port on RPi
-# 0 through 1023: Well Known Ports
-# 1024 through 49151: Registered Ports
-# 49152 through 65535: Dynamic and/or Private Ports
+
+local_port = 5005
+
 
 sock_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock_s.bind(('0.0.0.0', local_port))
