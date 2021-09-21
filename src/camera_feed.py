@@ -4,6 +4,7 @@ import time
 import itertools
 import numpy as np
 from create_bound import *
+import hough_transform
 """
 from systemeq import *
 from reg_triangle_detect import *
@@ -67,8 +68,8 @@ while True:
     image_upper_bound = bound_percent_cv2(120, 100, 97, 1.05)
     """
 
-    image_lower_bound = bound_percent_cv2(173, 100, 76, 0.8)
-    image_upper_bound = bound_percent_cv2(173, 100, 76, 1.2)
+    image_lower_bound = bound_percent_cv2(179, 32, 98, 0.8)
+    image_upper_bound = bound_percent_cv2(179, 32, 98, 1.2)
 
     """
     cv2.inRange() takes in a variable storing a read image, lower bound, and upper bound
@@ -85,7 +86,7 @@ while True:
     back to BGR in order to display interpretable images
     """
     imageFiltered = cv2.cvtColor(imageFiltered, cv2.COLOR_HSV2BGR)
-    #cv2.imshow("Filtered Image", imageFiltered)
+    cv2.imshow("Filtered Image", imageFiltered)
 
     # Converts BGR to Grayscale image in preparation for thresholding by making a high contrast image
     grayscale_im = cv2.cvtColor(imageFiltered, cv2.COLOR_BGR2GRAY)
@@ -93,54 +94,37 @@ while True:
 
     # uses OTSU and Binary Thresholding methods to maximize contrast in filtered image
     ret2, th2 = cv2.threshold(grayscale_im, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    #cv2.imshow("Grayscale Otsu Thresholded Image", th2)
+    cv2.imshow("Grayscale Otsu Thresholded Image", th2)
 
     # uses canny edge detection to find the edges of segmented image
     edges = cv2.Canny(th2, 100, 200)
     cv2.imshow("Canny Edge Detection", edges)
 
-    lines = cv2.HoughLines(edges, 1, np.pi / 180, 25)
+    lines = cv2.HoughLines(edges, 1, np.pi / 180, 23)
     color_lines = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+
     if lines is not None:
+        # unpacks rhos and thetas into list of list
         lines = [line[0] for line in lines]
+        #print(lines)
+        similar_lines_bucket = []
+        while(len(lines) > 0):
+            lines, similar_lines_bucket = hough_transform.filter_lines(lines, similar_lines_bucket)
+        avg_lines = hough_transform.average_lines(similar_lines_bucket)
 
-        buckets_of_similar_lines = []
-        ## Pass the result of this function back into it until the result returns len 0
-        def filter_lines(lines):
-            next_set_to_process = []
-            matching_set = [lines[0]]
-            rho, theta = lines[0]
-            for x in lines[1:]:
-                if threshold_function(x, lines[0]):
-                    matching_set.append(x)
-                else:
-                    next_set_to_process.append(x)
-            buckets_of_similr_lines.append(matching_set)
-            return next_set_to_process
+        if avg_lines is not None:
+            for line in avg_lines:
+                rho, theta = line
+                a = np.cos(theta)
+                b = np.sin(theta)
+                x0 = a*rho
+                y0 = b*rho
+                x1 = int(x0 + 1000*(-b))
+                y1 = int(y0 + 1000*(a))
+                x2 = int(x0 - 1000*(-b))
+                y2 = int(y0 - 1000*(a))
+                cv2.line(color_lines,(x1,y1),(x2,y2),(0,0,255),2)
 
-        # Heres what the call looks like
-        lines  = []
-        while(len(lines)>0):
-            lines = filter_lines(lines)
-        #at this point buckets_of_similar_lines is a list of lists where each element needs to be processed for average rho theta
-
-
-
-
-
-
-        for line in lines:
-            rho, theta = line
-            a = np.cos(theta)
-            b = np.sin(theta)
-            x0 = a*rho
-            y0 = b*rho
-            x1 = int(x0 + 1000*(-b))
-            y1 = int(y0 + 1000*(a))
-            x2 = int(x0 - 1000*(-b))
-            y2 = int(y0 - 1000*(a))
-
-            cv2.line(color_lines,(x1,y1),(x2,y2),(0,0,255),2)
     cv2.imshow("lines", color_lines)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
