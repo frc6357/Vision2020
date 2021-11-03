@@ -5,6 +5,7 @@ import itertools
 import numpy as np
 from create_bound import *
 import hough_transform
+import visionFunctions
 import math
 
 ts_start = time.time()
@@ -49,8 +50,8 @@ while True:
     image_upper_bound = bound_percent_cv2(120, 100, 97, 1.05)
     """
 
-    image_lower_bound = bound_percent_cv2(166, 85, 64, 0.5)
-    image_upper_bound = bound_percent_cv2(166, 85, 64, 1.7)
+    image_lower_bound = bound_percent_cv2(153, 85, 64, 0.5)
+    image_upper_bound = bound_percent_cv2(153, 85, 64, 1.7)
 
     """
     cv2.inRange() takes in a variable storing a read image, lower bound, and upper bound
@@ -67,7 +68,7 @@ while True:
     back to BGR in order to display interpretable images
     """
     imageFiltered = cv2.cvtColor(imageFiltered, cv2.COLOR_HSV2BGR)
-    #cv2.imshow("Filtered Image", imageFiltered)
+    cv2.imshow("Filtered Image", imageFiltered)
 
     # Converts BGR to Grayscale image in preparation for thresholding by making a high contrast image
     grayscale_im = cv2.cvtColor(imageFiltered, cv2.COLOR_BGR2GRAY)
@@ -109,17 +110,27 @@ while True:
         theta_b_lines = [hough_transform.theta_b(i) for i in point_pairs_lines]
         while len(theta_b_lines) > 0:
             theta_b_lines, bucket = hough_transform.filter_lines(theta_b_lines, bucket)
-
+        #print(bucket)
 
         if bucket is not None:
             avg_lines = hough_transform.average_lines(bucket)
-            #print("average lines", len(avg_lines))
-            #print("\n")
+            print("average lines", avg_lines)
+            print("\n")
 
-
-
+        intersect_points = [visionFunctions.intersections(i) for i in itertools.combinations(avg_lines,2)]
+        intersect_points = [i for i in intersect_points if i is not None]
+        intersect_points = visionFunctions.remove_dupe(intersect_points)
+        print("Intersection point count: {0}\n".format(len(intersect_points)))
+        print("Intersection point list: {0}\n".format(intersect_points))
+        for point in intersect_points:
+            print("point: {0}/n".format(point))
+            x,y = point
+            print("{0}, {1}".format(x,y))
+            cv2.circle(color_lines, (int(y), int(x)), 5, (0, 255, 0))
+        cv2.imshow("Points", color_lines)
         # Displaying avg lines
-        """try:
+
+        try:
             for avg_line in avg_lines:
                 theta, b = avg_line
                 if theta == 90 * math.pi/180:
@@ -138,13 +149,10 @@ while True:
                     cv2.line(color_lines, (x1, int(y1)), (x2,int(y2)), (255, 0, 0), 2)
             cv2.imshow("Average Lines", color_lines)
         except Exception as e:
-            print(e)"""
+            print(e)
 
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-    if cv2.waitKey(1) & 0xFF == ord('s'):
-        cv2.imwrite("frame.jpg", frame)
         break
 cap.release()
 cv2.destroyAllWindows()

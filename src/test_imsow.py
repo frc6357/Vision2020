@@ -1,29 +1,17 @@
-# This script filters colors by turning the pixels black that fall within a tolerance of HSV values
 import cv2
 import time
+
 import itertools
 import numpy as np
-from src.create_bound import *
-from src.systemeq import *
-from src.reg_triangle_detect import *
-from src.mb_to_xy import *
-from src.largest_triangle import *
-from src.removeDuplicates import *
-from src.smallest_triangle import *
-from src.dimension_check import *
-from src.longest_edge import *
-from src.draw_equilateral_triangle import *
-from src.find_tri_centroid import *
-from src.valid_lines import *
+from create_bound import *
+import hough_transform
+import visionFunctions
+import math
 
-ts_start = time.time()
-
-im = cv2.imread("../2020SampleVisionImages/WPILib_Robot_Vision_Images/BlueGoal-132in-Center.jpg")
-h, w, d = im.shape
-print(h, "height")
-print(w, "width")
-print(d, "depth")
-
+frame = cv2.imread("frame.jpg")
+cv2.imshow("frame", frame)
+h, w, d = frame.shape
+im = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
 """
 cv2.cvtColor() takes in a variable storing a read image
@@ -35,12 +23,10 @@ cv2.cvtColor(im, cv2.BGR2HLS)
 this will read the image stored in im that is currently in the BGR color space
 and convert all pixels to HLS
 """
-im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
-im3 = im
-
-
-# upper bound +5%: HSV (171.15, 105, 91.875)
-# lower bound -5%: HSV (154.85, 95, 83.125)
+#im3 = im
+# test 1 HSV color value: (173 deg, 48%, 76%)
+# upper bound +5%:
+# lower bound -5%:
 
 """
 bound_percent_cv2 method takes Hue(h), Saturation(s), Brightness(v), Threshold Percent(in decimal form so 100% = 1.0
@@ -48,8 +34,8 @@ Ex: input HSV = [120, 100, 97] and threshold image by +5%
 image_upper_bound = bound_percent_cv2(120, 100, 97, 1.05)
 """
 
-image_lower_bound = bound_percent_cv2(153, 100, 81, 0.7)
-image_upper_bound = bound_percent_cv2(153, 100, 81, 1.3)
+image_lower_bound = bound_percent_cv2(153, 85, 64, 0.4)
+image_upper_bound = bound_percent_cv2(153, 85, 64, 1.8)
 
 """
 cv2.inRange() takes in a variable storing a read image, lower bound, and upper bound
@@ -65,103 +51,93 @@ OpenCV displays all images in the BGR color space in order to look properly
 so after filtering the image in HSV color space the script needs to convert
 back to BGR in order to display interpretable images
 """
-
 imageFiltered = cv2.cvtColor(imageFiltered, cv2.COLOR_HSV2BGR)
-
 #cv2.imshow("Filtered Image", imageFiltered)
 
-#Converts BGR to Grayscale image in preparation for thresholding by making a bimodal image
-
+# Converts BGR to Grayscale image in preparation for thresholding by making a high contrast image
 grayscale_im = cv2.cvtColor(imageFiltered, cv2.COLOR_BGR2GRAY)
-#cv2.imshow("Grayscale Image", grayscale_im)
+# cv2.imshow("Grayscale Image", grayscale_im)
 
-ret2, th2 = cv2.threshold(grayscale_im, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-
+# uses OTSU and Binary Thresholding methods to maximize contrast in filtered image
+ret2, th2 = cv2.threshold(grayscale_im, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 #cv2.imshow("Grayscale Otsu Thresholded Image", th2)
-"""
-laplacian = cv2.Laplacian(grayscale_im, cv2.CV_64F)
 
-cv2.imshow("Laplacian Edge Detect", laplacian)
-
-sobelx = cv2.Sobel(grayscale_im,cv2.CV_64F,1,0,ksize=3)
-
-abs_sobel64f = np.absolute(sobelx)
-sobelx_8u = np.uint8(abs_sobel64f)
-
-cv2.imshow("Sobel X Edge Detect", sobelx_8u)
-
-sobely = cv2.Sobel(grayscale_im,cv2.CV_64F,0,1,ksize=3)
-
-abs_sobel64f = np.absolute(sobely)
-sobely_8u = np.uint8(abs_sobel64f)
-
-
-cv2.imshow("Sobel Y Edge Detect", sobely_8u)
-"""
+# uses canny edge detection to find the edges of segmented image
 edges = cv2.Canny(th2, 100, 200)
-
-#cv2.imshow("Canny Edge Detection", edges)
-
+cv2.imshow("Canny Edge Detection", edges)
 
 
-lines = []
-"""
-for i in range(60, -1, -5):
-    lines = cv2.HoughLines(edges, 1, np.pi / 180, i)
-    num_lines = len(lines)
-    if num_lines in range(8, 21):
-        new_list = [a[0, 1] for a in lines]
-        valid_lines = valid_line_test(lines, new_list)
-        break
-"""
-for i in range(60, 6, -5):
-    if i > 0:
-        lines = cv2.HoughLines(edges, 1, np.pi / 180, i)
-        if type(lines) != str:
-            lines = check_valid(lines, 0.1)
-            num_lines = len(lines)
-            while num_lines in range(6, 12):
-                lines = check_valid(lines, 0.1)
-                num_lines = len(lines)
-                if num_lines == 6:
-                    break
-    else:
-        break
+#lines = cv2.HoughLines(edges, 1, np.pi / 180, 55, min_theta=-10*math.pi/180, max_theta=10*math.pi/180)
+lines = cv2.HoughLines(edges, 1, np.pi / 180, 45)
+#lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 125)
+color_lines = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
-#valid_line_test(lines, )
+if lines is not None:
+    point_pairs_lines = []
+    bucket = []
+    lines = [line[0] for line in lines]
+    for line in lines:
+        #x1, y1, x2, y2 = line
+        rho, theta = line
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a*rho
+        y0 = b*rho
+        x1 = int(x0 + 1000*(-b))
+        y1 = int(y0 + 1000*(a))
+        x2 = int(x0 - 1000*(-b))
+        y2 = int(y0 - 1000*(a))
+
+        point_pairs_lines.append([x1, y1, x2, y2])
+        #cv2.line(color_lines, (x1, y1), (x2, y2), (255,0,0), 2)
+    #print(point_pairs_lines)
+    theta_b_lines = [hough_transform.theta_b(i) for i in point_pairs_lines]
+    while len(theta_b_lines) > 0:
+        theta_b_lines, bucket = hough_transform.filter_lines(theta_b_lines, bucket)
+    print(bucket)
+
+    if bucket is not None:
+        avg_lines = hough_transform.average_lines(bucket)
+        #print("average lines", len(avg_lines))
+        #print("\n")
+    #vert_liens = [i for i in avg_lines if vert_line_filter(i)]
 
 
+    intersect_points = [visionFunctions.intersections(i) for i in itertools.combinations(avg_lines,2)]
+    print(len(intersect_points))
+    print("\n")
+    intersect_points = [i for i in intersect_points if i is not None]
+    print(len(intersect_points))
+    print("\n")
+    intersect_points = visionFunctions.remove_dupe(intersect_points)
+    print(len(intersect_points))
+    print("\n")
 
+    # Displaying avg lines
+    try:
+        for avg_line in avg_lines:
+            theta, b = avg_line
+            if theta == 90 * math.pi/180:
+                cv2.line(color_lines, (int(b), 1), (int(b), h-1), (255,0,0), 2)
 
+            else:
 
-print("threshold of: ", i)
-print("number of lines: ", num_lines)
+                print("theta: " + str(theta))
+                m = math.tan(theta)
+                x1 = 1
+                x2 = w-1
+                y1 = m*x1 + b
+                y2 = m*x2 +b
+                print("y1: " + str(y1))
+                print("y2: " + str(y2))
+                print("\n")
+                cv2.line(color_lines, (x1, int(y1)), (x2,int(y2)), (255, 0, 0), 2)
+        cv2.imshow("Average Lines", color_lines)
+    except Exception as e:
+        print(e)
 
-#need a check to make sure we find lines
-
-points = []
-slope_offset = []
-for line in lines:
-    rho, theta = line[0]
-    a = np.cos(theta)
-    b = np.sin(theta)
-    x0 = a*rho
-    y0 = b*rho
-
-    x1 = int(x0 + 1000*(-b))
-    y1 = int(y0 + 1000*(a))
-    x2 = int(x0 - 1000*(-b))
-    y2 = int(y0 - 1000*(a))
-
-    m1 = (y2-y1)/(x2-x1)
-    b1 = y1 - m1*x1
-    slope_offset.append([m1, b1])
-    cv2.line(im, (x1, y1), (x2, y2), (0, 255, 255), 2)
-"""
-a for loop that takes the output from hough lines (rho, theta) and transforms them 
-into slopes and intercepts and appends them to an array  
-"""
-
-im = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
-cv2.imshow("why are u not working", im)
 cv2.waitKey(0)
+#if cv2.waitKey(1) & 0xFF == ord('q'):
+    #break
+#cap.release()
+cv2.destroyAllWindows()
