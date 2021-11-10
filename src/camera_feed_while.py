@@ -8,23 +8,18 @@ import hough_transform
 import visionFunctions
 import math
 import time
+def camera_feed(*args):
 
-cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
-cap.set(cv2.CAP_PROP_EXPOSURE, -11)
-
-stop_var = 1
-
-#print(ts_mid-ts_start, "seconds to start")
-while True:
-    # Capture frame-by-frame
     ts_start = time.time()
+    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+    cap.set(cv2.CAP_PROP_EXPOSURE, -11)
     ret, frame = cap.read()
 
     h, w, d = frame.shape
 
     #cv2.circle(frame, (320, 240), 5, (248, 26, 225))
 
-    cv2.imshow("frame", frame)
+    #cv2.imshow("frame", frame)
 
     im = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -79,7 +74,7 @@ while True:
 
     # uses canny edge detection to find the edges of segmented image
     edges = cv2.Canny(th2, 100, 200)
-    cv2.imshow("Canny Edge Detection", edges)
+    #cv2.imshow("Canny Edge Detection", edges)
 
 
     #lines = cv2.HoughLines(edges, 1, np.pi / 180, 55, min_theta=-10*math.pi/180, max_theta=10*math.pi/180)
@@ -127,33 +122,55 @@ while True:
             print("{0}, {1}".format(x,y))
             cv2.circle(frame, (int(y), int(x)), 5, (0, 255, 0))
         ts_end = time.time()
-        cv2.imshow("Points", frame)
+        if len(args) > 0:
+            win_name = str(args[0])
+        else:
+            win_name = "Points"
+        cv2.imshow(win_name, frame)
         print("time per loop", ts_end-ts_start, "s")
 
-        # Displaying avg lines
-        """try:
-            for avg_line in avg_lines:
-                theta, b = avg_line
-                if theta == 90 * math.pi/180:
-                    cv2.line(color_lines, (int(b), 1), (int(b), h-1), (255,0,0), 2)
+def captureFrame():
+    while True:
+        x = ord(input("How many frames: "))
 
-                else:
+        if x == 49:
+            camera_feed()
+        if x == 50:
+            for i in range(0, 2):
+                camera_feed()
+                print("loop number: ", i)
+        elif x == 113:
+            return
+        if cv2.waitKey(0) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+            continue
+        """elif x == 50:
+            for i in range(0, 2):
+                camera_feed()
+            if cv2.waitKey(0) & 0xFF == ord('q'):
+                continue
+        elif x == 51:
+            for i in range(0, 3):
+                camera_feed()
+            if cv2.waitKey(0) & 0xFF == ord('q'):
+                continue
+        elif x == 52:
+            for i in range(0,4):
+                camera_feed()
+        elif x == 53:
+            for i in range(0,5):
+                camera_feed()
+        elif x == 54:
+            for i in range(0,6):
+                camera_feed()
+        elif x == 55:
+            for i in range(0,7):
+                camera_feed()
+        elif x == 56:
+            for i in range(0,8):
+                camera_feed()
+        elif x == 57:
+            for i in range(0,9):
+                camera_feed()"""
 
-                    print("theta: " + str(theta))
-                    m = math.tan(theta)
-                    x1 = 1
-                    x2 = w-1
-                    y1 = m*x1 + b
-                    y2 = m*x2 +b
-                    print("y1: " + str(y1))
-                    print("y2: " + str(y2))
-                    cv2.line(frame, (x1, int(y1)), (x2,int(y2)), (255, 0, 0), 3)
-            #cv2.imshow("Average Lines", color_lines)
-        except Exception as e:
-            print(e)"""
-
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-cap.release()
-cv2.destroyAllWindows()
+captureFrame()

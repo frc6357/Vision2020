@@ -9,15 +9,10 @@ import visionFunctions
 import math
 import time
 
-cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
-cap.set(cv2.CAP_PROP_EXPOSURE, -11)
-
-stop_var = 1
-
-#print(ts_mid-ts_start, "seconds to start")
-while True:
-    # Capture frame-by-frame
+def camera_feed():
     ts_start = time.time()
+    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+    cap.set(cv2.CAP_PROP_EXPOSURE, -11)
     ret, frame = cap.read()
 
     h, w, d = frame.shape
@@ -129,31 +124,14 @@ while True:
         ts_end = time.time()
         cv2.imshow("Points", frame)
         print("time per loop", ts_end-ts_start, "s")
+    if cv2.waitKey(0) & 0xFF == ord('q'):
+        return
 
-        # Displaying avg lines
-        """try:
-            for avg_line in avg_lines:
-                theta, b = avg_line
-                if theta == 90 * math.pi/180:
-                    cv2.line(color_lines, (int(b), 1), (int(b), h-1), (255,0,0), 2)
+def captureFrame(*args):
+    if len(args) == 1:
+        for i in range(0, args[0]):
+            camera_feed()
+    else:
+        camera_feed()
 
-                else:
-
-                    print("theta: " + str(theta))
-                    m = math.tan(theta)
-                    x1 = 1
-                    x2 = w-1
-                    y1 = m*x1 + b
-                    y2 = m*x2 +b
-                    print("y1: " + str(y1))
-                    print("y2: " + str(y2))
-                    cv2.line(frame, (x1, int(y1)), (x2,int(y2)), (255, 0, 0), 3)
-            #cv2.imshow("Average Lines", color_lines)
-        except Exception as e:
-            print(e)"""
-
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-cap.release()
-cv2.destroyAllWindows()
+captureFrame(3)
