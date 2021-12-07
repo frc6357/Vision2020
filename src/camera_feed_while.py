@@ -19,7 +19,7 @@ def camera_feed(*args):
 
     #cv2.circle(frame, (320, 240), 5, (248, 26, 225))
 
-    #cv2.imshow("frame", frame)
+    cv2.imshow("frame", frame)
 
     im = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -66,15 +66,15 @@ def camera_feed(*args):
 
     # Converts BGR to Grayscale image in preparation for thresholding by making a high contrast image
     grayscale_im = cv2.cvtColor(imageFiltered, cv2.COLOR_BGR2GRAY)
-    # cv2.imshow("Grayscale Image", grayscale_im)
+    cv2.imshow("Grayscale Image", grayscale_im)
 
     # uses OTSU and Binary Thresholding methods to maximize contrast in filtered image
     ret2, th2 = cv2.threshold(grayscale_im, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    #cv2.imshow("Grayscale Otsu Thresholded Image", th2)
+    cv2.imshow("Grayscale Otsu Thresholded Image", th2)
 
     # uses canny edge detection to find the edges of segmented image
     edges = cv2.Canny(th2, 100, 200)
-    #cv2.imshow("Canny Edge Detection", edges)
+    cv2.imshow("Canny Edge Detection", edges)
 
 
     #lines = cv2.HoughLines(edges, 1, np.pi / 180, 55, min_theta=-10*math.pi/180, max_theta=10*math.pi/180)
@@ -101,7 +101,9 @@ def camera_feed(*args):
             point_pairs_lines.append([x1, y1, x2, y2])
             #cv2.line(color_lines, (x1, y1), (x2, y2), (255,0,0), 2)
         #print(point_pairs_lines)
+
         theta_b_lines = [hough_transform.theta_b(i) for i in point_pairs_lines]
+
         while len(theta_b_lines) > 0:
             theta_b_lines, bucket = hough_transform.filter_lines(theta_b_lines, bucket)
         #print(bucket)
@@ -116,6 +118,8 @@ def camera_feed(*args):
         intersect_points = visionFunctions.remove_dupe(intersect_points)
         print("Intersection point count: {0}\n".format(len(intersect_points)))
         print("Intersection point list: {0}\n".format(intersect_points))
+
+
         for point in intersect_points:
             print("point: {0}/n".format(point))
             x,y = point
@@ -123,54 +127,60 @@ def camera_feed(*args):
             cv2.circle(frame, (int(y), int(x)), 5, (0, 255, 0))
         ts_end = time.time()
         if len(args) > 0:
-            win_name = str(args[0])
-        else:
-            win_name = "Points"
-        cv2.imshow(win_name, frame)
+            points_win_name = "Points " + str(args[0])
+            lines_win_name = "Lines " + str(args[0])
+            edges_win_name = "Canny Edge Detection " + str(args[0])
+
+        cv2.imshow(edges_win_name, edges)
+
+        try:
+            for avg_line in avg_lines:
+                theta, b = avg_line
+                if theta == 90 * math.pi/180:
+                    cv2.line(color_lines, (int(b), 1), (int(b), h-1), (255,0,0), 2)
+
+                else:
+
+                    print("theta: " + str(theta))
+                    m = math.tan(theta)
+                    x1 = 1
+                    x2 = w-1
+                    y1 = m*x1 + b
+                    y2 = m*x2 +b
+                    print("y1: " + str(y1))
+                    print("y2: " + str(y2))
+                    cv2.line(color_lines, (x1, int(y1)), (x2,int(y2)), (255, 0, 0), 3)
+            cv2.imshow(lines_win_name, color_lines)
+        except Exception as e:
+            print(e)
+
+        cv2.imshow(points_win_name, frame)
         print("time per loop", ts_end-ts_start, "s")
 
 def captureFrame():
+    key_values = {
+         49 : 1,
+         50 : 2,
+         51 : 3,
+         52 : 4,
+         53 : 5,
+         54 : 6,
+         55 : 7,
+         56 : 8,
+         57 : 9,
+        113 : "q"
+    }
     while True:
         x = ord(input("How many frames: "))
 
-        if x == 49:
-            camera_feed()
-        if x == 50:
-            for i in range(0, 2):
-                camera_feed()
-                print("loop number: ", i)
-        elif x == 113:
-            return
-        if cv2.waitKey(0) & 0xFF == ord('q'):
-            cv2.destroyAllWindows()
-            continue
-        """elif x == 50:
-            for i in range(0, 2):
-                camera_feed()
+        if x in key_values:
+            if key_values[x] == "q":
+                return
+            for i in range(0, key_values[x]):
+                camera_feed(i + 1)
             if cv2.waitKey(0) & 0xFF == ord('q'):
+                cv2.destroyAllWindows()
                 continue
-        elif x == 51:
-            for i in range(0, 3):
-                camera_feed()
-            if cv2.waitKey(0) & 0xFF == ord('q'):
-                continue
-        elif x == 52:
-            for i in range(0,4):
-                camera_feed()
-        elif x == 53:
-            for i in range(0,5):
-                camera_feed()
-        elif x == 54:
-            for i in range(0,6):
-                camera_feed()
-        elif x == 55:
-            for i in range(0,7):
-                camera_feed()
-        elif x == 56:
-            for i in range(0,8):
-                camera_feed()
-        elif x == 57:
-            for i in range(0,9):
-                camera_feed()"""
+
 
 captureFrame()
