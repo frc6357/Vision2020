@@ -67,15 +67,15 @@ while True:
     back to BGR in order to display interpretable images
     """
     imageFiltered = cv2.cvtColor(imageFiltered, cv2.COLOR_HSV2BGR)
-    #cv2.imshow("Filtered Image", imageFiltered)
+    cv2.imshow("Filtered Image", imageFiltered)
 
     # Converts BGR to Grayscale image in preparation for thresholding by making a high contrast image
     grayscale_im = cv2.cvtColor(imageFiltered, cv2.COLOR_BGR2GRAY)
-    # cv2.imshow("Grayscale Image", grayscale_im)
+    cv2.imshow("Grayscale Image", grayscale_im)
 
     # uses OTSU and Binary Thresholding methods to maximize contrast in filtered image
     ret2, th2 = cv2.threshold(grayscale_im, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    #cv2.imshow("Grayscale Otsu Thresholded Image", th2)
+    cv2.imshow("Grayscale Otsu Thresholded Image", th2)
 
     # uses canny edge detection to find the edges of segmented image
     edges = cv2.Canny(th2, 100, 200)
@@ -84,6 +84,8 @@ while True:
 
     #lines = cv2.HoughLines(edges, 1, np.pi / 180, 55, min_theta=-10*math.pi/180, max_theta=10*math.pi/180)
     #lines = cv2.HoughLines(edges, 1, np.pi / 180, 20)
+
+
     lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 10)
     color_lines = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
@@ -94,7 +96,7 @@ while True:
         for line in lines:
             x1, y1, x2, y2 = line
             """rho, theta = line
-            a = np.cos(theta)
+            a = np.cos(theta)w
             b = np.sin(theta)
             x0 = a*rho
             y0 = b*rho
@@ -119,7 +121,7 @@ while True:
 
 
         # Displaying avg lines
-        """try:
+        try:
             for avg_line in avg_lines:
                 theta, b = avg_line
                 if theta == 90 * math.pi/180:
@@ -138,7 +140,7 @@ while True:
                     cv2.line(color_lines, (x1, int(y1)), (x2,int(y2)), (255, 0, 0), 2)
             cv2.imshow("Average Lines", color_lines)
         except Exception as e:
-            print(e)"""
+            print(e)
 
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
