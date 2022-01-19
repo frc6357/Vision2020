@@ -11,10 +11,10 @@ import time
 
 def camera_feed():
     ts_start = time.time()
-    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
-    cap.set(cv2.CAP_PROP_EXPOSURE, -11)
-    ret, frame = cap.read()
-
+    #cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+    #cap.set(cv2.CAP_PROP_EXPOSURE, -11)
+    #ret, frame = cap.read()
+    frame = cv2.imread("C:/Users/vivek/PycharmProjects/Vision2020/src/frame_1.jpg")
     h, w, d = frame.shape
 
     #cv2.circle(frame, (320, 240), 5, (248, 26, 225))
@@ -79,7 +79,7 @@ def camera_feed():
 
     #lines = cv2.HoughLines(edges, 1, np.pi / 180, 55, min_theta=-10*math.pi/180, max_theta=10*math.pi/180)
     #lines = cv2.HoughLines(edges, 1, np.pi / 180, 20)
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 10)
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 15)
     color_lines = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
     if lines is not None:
@@ -111,6 +111,8 @@ def camera_feed():
             print("average lines", avg_lines)
             print("\n")
 
+
+
         intersect_points = [visionFunctions.intersections(i) for i in itertools.combinations(avg_lines,2)]
         intersect_points = [i for i in intersect_points if i is not None]
         intersect_points = visionFunctions.remove_dupe(intersect_points)
@@ -122,6 +124,27 @@ def camera_feed():
             print("{0}, {1}".format(x,y))
             cv2.circle(frame, (int(y), int(x)), 5, (0, 255, 0))
         ts_end = time.time()
+
+        try:
+            for avg_line in avg_lines:
+                theta, b = avg_line
+                if theta == 90 * math.pi/180:
+                    cv2.line(frame, (int(b), 1), (int(b), h-1), (255,255,255), 2)
+
+                else:
+
+                    print("theta: " + str(theta))
+                    m = math.tan(theta)
+                    x1 = 1
+                    x2 = w-1
+                    y1 = m*x1 + b
+                    y2 = m*x2 + b
+                    print("y1: " + str(y1))
+                    print("y2: " + str(y2))
+                    cv2.line(frame, (x1, int(y1)), (x2,int(y2)), (255, 255, 255), 2)
+        except Exception as e:
+            print(e)
+
         cv2.imshow("Points", frame)
         print("time per loop", ts_end-ts_start, "s")
     if cv2.waitKey(0) & 0xFF == ord('q'):

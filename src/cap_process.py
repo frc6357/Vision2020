@@ -30,8 +30,29 @@ def rectCentr(input):
     mid_point = (int((bot_left[1] + top_right[1])/2), int((bot_left[0] + top_right[0])/2))
     return mid_point
 
-def findHoriAngle(cent, w):
-    return abs(w-cent[0]) * 0.04499
+def extremeItems(a, str_input):
+    Xs = [i[0] for i in a]
+    Ys = [i[1] for i in a]
+    if str_input == 'minXmaxY':
+        bucket = []
+        b = min(Xs)
+        for i, j in enumerate(a):
+            if b in j:
+                bucket.append(a[i])
+        return [b, max(Ys)]
+    elif str_input == 'maxXmaxY':
+        bucket = []
+        b = max(Xs)
+        for i, j in enumerate(a):
+            if b in j:
+                bucket.append(a[i])
+        return [b, max(Ys)]
+
+def findHoriDist(dist, w):
+    hori_angle = dist * 0.04499
+    # bottom side length of rectangle is 4 inches total
+    # return distance in inches
+    return (104-45) / math.tan(hori_angle)
 
 def process_frame(frame):
     h, w, d = frame.shape
@@ -127,7 +148,7 @@ def process_frame(frame):
         while len(theta_b_lines) > 0:
             theta_b_lines, bucket = hough_transform.filter_lines(theta_b_lines, bucket)
         #print(bucket)
-
+"""
         # averages buckets together
         if bucket is not None:
             avg_lines = hough_transform.average_lines(bucket)
@@ -141,8 +162,18 @@ def process_frame(frame):
         #print("Intersection point count: {0}\n".format(len(intersect_points)))
         #print("Intersection point list: {0}\n".format(intersect_points))
 
+        botLeftPoint = extremeItems(intersect_points, 'minXmaxY')
+        botRightPoint = extremeItems(intersect_points, 'maxXmaxY')
+        botEdgeLength = botRightPoint[0] - botLeftPoint[0]
+        print(intersect_points)
+        print("bottom left:", botLeftPoint)
+        print("bottom right:", botRightPoint)
+        print("bottom edge length:", botEdgeLength)
+
         # draw centroid
-        centroid = rectCentr(intersect_points)
+        moments = cv2.moments(edges)
+        centroid = (int(moments["m10"]/moments["m00"]), int(moments["01"]/moments["m00"]))
+        # rectCentr(intersect_points)
         cv2.circle(frame, centroid, 5, (255,0,35))
 
         # draw intersections on original input frame
@@ -150,9 +181,9 @@ def process_frame(frame):
             print("point: {0}/n".format(point))
             x,y = point
             print("{0}, {1}".format(x,y))
-            cv2.circle(frame, (int(y), int(x)), 5, (0, 255, 0))
+            cv2.circle(frame, (int(point[1]), int(point[0])), 5, (0, 255, 0))"""
 
-
+"""
         # draws average lines on input frame
         try:
             for avg_line in avg_lines:
@@ -167,15 +198,16 @@ def process_frame(frame):
                     x1 = 1
                     x2 = w-1
                     y1 = m*x1 + b
-                    y2 = m*x2 +b
+                    y2 = m*x2 + b
                     print("y1: " + str(y1))
                     print("y2: " + str(y2))
                     cv2.line(frame, (x1, int(y1)), (x2,int(y2)), (255, 0, 0), 3)
         except Exception as e:
             print(e)
-        print("horizontal angle: " + str(findHoriAngle(centroid, w)))
+"""
+        #print("horizontal distance: " + str(findHoriDist(centroid, w)))
         cv2.imshow("Frame " + str(datetime.now().strftime("%H:%M:%S")), frame)
-        #cv2.imshow("Canny Edge Detection", edges)
+        cv2.imshow("Canny Edge Detection", edges)
         if cv2.waitKey(0) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
     return frame
@@ -217,8 +249,9 @@ def cap_frame():
 
             frames = []
             for i in range(0, key_values[x]):
-                tic = time.time()
+
                 ret, frame = cap.read()
+                frame = cv2.imread("C:/Users/vivek/Desktop/stuffff/multiple-targets.png")
                 if ret == False:
                     print("broke -> ", "pre release " + str(cap.isOpened()))
                     cap.release()
@@ -234,17 +267,11 @@ def cap_frame():
                 processed_frames = pool.map(process_frame, frames)
 
 
-            """else:
-                with multiprocessing.Pool(processes=10) as pool:
-                    processed_frames = pool.map(test_process_frame, frames)"""
-            #processed_frames = [process_frame(i) for i in frames if i is not None]
-            #print(processed_frames)
-            #display_frames(processed_frames)
 
-            toc = time.time()
-            print(toc - tic)
             a = 1
             for frame in processed_frames:
+                print(frame)
+                print("\n")
                 cv2.imshow("Processed frames " + str(a) + ": " + str(datetime.now().strftime("%H:%M:%S")), frame)
                 a += 1
             if cv2.waitKey(0) & 0xFF == ord('q'):

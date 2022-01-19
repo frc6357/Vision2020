@@ -10,6 +10,7 @@ def theta_b(input):
         b = y2 - math.tan(theta)*x2
     return [theta, b]
 
+
 def threshold(x, input):
     theta, b = x
     theta1, b1 = input
@@ -25,7 +26,6 @@ def filter_lines(lines, bucket):
 
     # initial rho and theta in the total list of lines
     matching_set = [lines[0]]
-    rho, theta = lines[0]
 
     # iterating through all the other rhos and thetas excluding the first
     for x in lines[1:]:
