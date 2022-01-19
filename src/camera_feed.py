@@ -1,6 +1,6 @@
 import cv2
 import time
-
+import imutils
 import itertools
 import numpy as np
 from create_bound import *
@@ -19,7 +19,7 @@ while True:
     # Capture frame-by-frame
 
     ret, frame = cap.read()
-
+    #frame = cv2.imread("C:/Users/vivek/PycharmProjects/Vision2020/src/frame_2.jpg")
     h, w, d = frame.shape
 
     #cv2.circle(frame, (320, 240), 5, (248, 26, 225))
@@ -71,43 +71,102 @@ while True:
 
     # Converts BGR to Grayscale image in preparation for thresholding by making a high contrast image
     grayscale_im = cv2.cvtColor(imageFiltered, cv2.COLOR_BGR2GRAY)
-    cv2.imshow("Grayscale Image", grayscale_im)
+    #cv2.imshow("Grayscale Image", grayscale_im)
 
     # uses OTSU and Binary Thresholding methods to maximize contrast in filtered image
     ret2, th2 = cv2.threshold(grayscale_im, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     cv2.imshow("Grayscale Otsu Thresholded Image", th2)
 
     # uses canny edge detection to find the edges of segmented image
-    edges = cv2.Canny(th2, 100, 200)
+    edges = cv2.Canny(th2, 50, 200)
     cv2.imshow("Canny Edge Detection", edges)
 
+    # finds each individual "contour" or OTSU thresholded rectangluar region
+    contours = cv2.findContours(th2, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contours = imutils.grab_contours(contours)
 
-    #lines = cv2.HoughLines(edges, 1, np.pi / 180, 55, min_theta=-10*math.pi/180, max_theta=10*math.pi/180)
-    #lines = cv2.HoughLines(edges, 1, np.pi / 180, 20)
+    contourAreas = []
+
+    # iterates through list
+    for contour in contours:
+        # finds pixel count for each target
+        A = cv2.contourArea(contour)
+        contourAreas.append(A)
+            #cv2.circle(frame, (cX,cY), 3, (0,0,255))
+            #centroids.append((Cx, Cy))
+
+    for contour in contours:
+        M = cv2.moments(contour)
+        if int(M["m00"]) != 0:
+            # chooses the target with the largest pixel count
+            if (cv2.contourArea(contour) == max(contourAreas)):
+                Cx = int(M["m10"]/M["m00"])
+                Cy = int(M["m01"]/M["m00"])
+                cv2.circle(frame, (Cx, Cy), 3, (0,0,255))
+                cv2.putText(frame, "center: ({x_val}, {y_val})".format(x_val=Cx, y_val=Cy), (20, 20),
+                            cv2.FONT_HERSHEY_PLAIN, 2, (255,0,0), 1)
+                # mounting height
+                vertOffset = 45
+
+                # degrees per pixel, constant measure before hand
+                degPix = 0.1722487
+
+                horiAngle = degPix * (w/2-Cx)
+                vertAngle = degPix * (h/2-Cy)
+                # if vertical angle is zero then this breaks, practically in a match we will never be level with the
+                # target
+                distance = (104-vertOffset) / (math.tan(math.pi/180 * vertAngle))
+
+                cv2.putText(frame, "horizontal angle: {theta}".format(theta=horiAngle), (20, 80),
+                            cv2.FONT_HERSHEY_PLAIN, 2, (255,0,0), 1)
+                cv2.putText(frame, "vertical angle: {theta}".format(theta=vertAngle), (20, 200),
+                            cv2.FONT_HERSHEY_PLAIN, 2, (255,0,0), 1)
+                cv2.putText(frame, "distance: {dist}".format(dist=distance), (20, 140),
+                            cv2.FONT_HERSHEY_PLAIN, 2, (255,0,0), 1)
 
 
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 10)
-    color_lines = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+    cv2.imshow("Edges", edges)
+    cv2.imshow("Centroids and Image", frame)
 
-    if lines is not None:
-        point_pairs_lines = []
-        bucket = []
-        lines = [line[0] for line in lines]
-        for line in lines:
-            x1, y1, x2, y2 = line
-            """rho, theta = line
-            a = np.cos(theta)w
-            b = np.sin(theta)
-            x0 = a*rho
-            y0 = b*rho
-            x1 = int(x0 + 1000*(-b))
-            y1 = int(y0 + 1000*(a))
-            x2 = int(x0 - 1000*(-b))
-            y2 = int(y0 - 1000*(a))"""
 
-            point_pairs_lines.append([x1, y1, x2, y2])
-            #cv2.line(color_lines, (x1, y1), (x2, y2), (255,0,0), 2)
-        #print(point_pairs_lines)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+    if cv2.waitKey(1) & 0xFF == ord('s'):
+        cv2.imwrite("frame.jpg", frame)
+        break
+        #cap.release()
+        cv2.destroyAllWindows()
+#lines = cv2.HoughLines(edges, 1, np.pi / 180, 55, min_theta=-10*math.pi/180, max_theta=10*math.pi/180)
+#lines = cv2.HoughLines(edges, 1, np.pi / 180, 20)
+
+"""
+lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 10)
+color_lines = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+
+if lines is not None:
+    point_pairs_lines = []
+    bucket = []
+    lines = [line[0] for line in lines]
+    for line in lines:
+        x1, y1, x2, y2 = line
+        rho, theta = line
+        a = np.cos(theta)w
+        b = np.sin(theta)
+        x0 = a*rho
+        y0 = b*rho
+        x1 = int(x0 + 1000*(-b))
+        y1 = int(y0 + 1000*(a))
+        x2 = int(x0 - 1000*(-b))
+        y2 = int(y0 - 1000*(a))
+    
+        point_pairs_lines.append([x1, y1, x2, y2])
+        #cv2.line(color_lines, (x1, y1), (x2, y2), (255,0,0), 2)
+        """
+
+"""
+       
+       #print(point_pairs_lines)
         theta_b_lines = [hough_transform.theta_b(i) for i in point_pairs_lines]
         while len(theta_b_lines) > 0:
             theta_b_lines, bucket = hough_transform.filter_lines(theta_b_lines, bucket)
@@ -119,7 +178,9 @@ while True:
             #print("\n")
 
 
-
+        
+        
+        
         # Displaying avg lines
         try:
             for avg_line in avg_lines:
@@ -140,13 +201,4 @@ while True:
                     cv2.line(color_lines, (x1, int(y1)), (x2,int(y2)), (255, 0, 0), 2)
             cv2.imshow("Average Lines", color_lines)
         except Exception as e:
-            print(e)
-
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-    if cv2.waitKey(1) & 0xFF == ord('s'):
-        cv2.imwrite("frame.jpg", frame)
-        break
-cap.release()
-cv2.destroyAllWindows()
+            print(e)"""
